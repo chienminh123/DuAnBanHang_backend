@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .header {
+            color: #2c3e50;
+        }
+
+        .info-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="header">Chào mừng {{TenNhanVien}} gia nhập NMCcuteShop!</h2>
+        <p>Tài khoản nhân viên của bạn đã được khởi tạo thành công.</p>
+
+        <div class="info-box">
+            <p><strong>Thông tin đăng nhập:</strong></p>
+            <ul>
+                <li><b>Tài khoản:</b> {{TenTaiKhoan}}</li>
+                <li><b>Mật khẩu:</b> {{MatKhau}}</li>
+            </ul>
+        </div>
+
+        <p>Vui lòng đăng nhập và đổi mật khẩu ngay để bảo mật thông tin.</p>
+        <hr />
+        <p class="footer">Đây là email tự động, vui lòng không trả lời.<br />Trân trọng, Admin Team.</p>
+    </div>
+</body>
+</html>
