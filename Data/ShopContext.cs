@@ -24,9 +24,18 @@ namespace backend.Data
         public DbSet<MaGiamGia> MaGiamGia { get; set; }
         public DbSet<KiemKe> KiemKe { get; set; }
         public DbSet<ChiTietKiemKe> ChiTietKiemKe { get; set; }
-
-
-
+        public DbSet<CaLamViec> CaLamViec { get; set; }
+        public DbSet<ChamCong> ChamCong { get; set; }
+        public DbSet<LichLamViec> LichLamViec { get; set; }
+        public DbSet<CauHinhLuong> CauHinhLuong { get; set; }
+        public DbSet<BangLuong> BangLuong { get; set; }
+        public DbSet<Cart> Cart { get; set; }
+        public DbSet<CartDetail> CartDetail { get; set; }
+        public DbSet<Order> Order { get; set; }
+        public DbSet<OrderDetail> OrderDetail { get; set; }
+        public DbSet<OrderDetailTopping> OrderDetailTopping { get; set; }
+        public DbSet<CartDetailTopping> CartDetailTopping { get; set; }
+        public DbSet<MenuCuaHang> MenuCuaHang { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -38,15 +47,15 @@ namespace backend.Data
                     .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ChucVu>().HasData(
-                new ChucVu { ChucVuId = 1, ChucVuName = "Giám đốc", ChucVuDescription="Người quản lý tất cả. tạo tài khoản các phòng ban" },
-                new ChucVu { ChucVuId = 2, ChucVuName = "Kế toán", ChucVuDescription="Người tính lương, duyệt thu chi từ kho và QL khu vực"},
-                new ChucVu { ChucVuId = 3, ChucVuName = "Sản xuất", ChucVuDescription = "Người tiếp nhận đặt hàng từ cửa hàng, đặt hàng với bên thứ 3, phiếu nhập và xuất kho từ CH và bên thứ 3" },
-                new ChucVu { ChucVuId = 4, ChucVuName = "Quản lý khu vực", ChucVuDescription = "Người quản lý các CH do GD phân, làm phiếu đề xuất khi CH cần, ql công ca NV cửa hàng" },
-                new ChucVu { ChucVuId = 5, ChucVuName = "Quản lý cửa hàng", ChucVuDescription = "Người đặt thực phẩm với kho, tạo các phiếu điều chuyển giữ các cửa hàng, xem báo cáo doanh thu và đặt thực phẩm" },
-                new ChucVu { ChucVuId = 6, ChucVuName = "Nhân viên bán hàng", ChucVuDescription = "xem được công ca, phiếu lương" },
-                new ChucVu { ChucVuId = 7, ChucVuName = "Khách hàng", ChucVuDescription = "Đặt hàng qua web, tích điểm" },
-                new ChucVu { ChucVuId = 8, ChucVuName = "Máy Pos", ChucVuDescription = "máy ở CH để nhân viên order trực tiếp" },
-                new ChucVu { ChucVuId = 9, ChucVuName = "Nhân sự", ChucVuDescription = "Phân chức vụ các phòng ban " }
+                new ChucVu { ChucVuId = 1, ChucVuName = "Admin", ChucVuDescription="Người quản lý tất cả. tạo tài khoản các phòng ban" },
+                new ChucVu { ChucVuId = 2, ChucVuName = "Accountant", ChucVuDescription="Người tính lương, duyệt thu chi từ kho và QL khu vực"},
+                new ChucVu { ChucVuId = 3, ChucVuName = "Production", ChucVuDescription = "Người tiếp nhận đặt hàng từ cửa hàng, đặt hàng với bên thứ 3, phiếu nhập và xuất kho từ CH và bên thứ 3" },
+                new ChucVu { ChucVuId = 4, ChucVuName = "AreaManager", ChucVuDescription = "Người quản lý các CH do GD phân, làm phiếu đề xuất khi CH cần, ql công ca NV cửa hàng" },
+                new ChucVu { ChucVuId = 5, ChucVuName = "StoreManager", ChucVuDescription = "Người đặt thực phẩm với kho, tạo các phiếu điều chuyển giữ các cửa hàng, xem báo cáo doanh thu và đặt thực phẩm" },
+                new ChucVu { ChucVuId = 6, ChucVuName = "Sales", ChucVuDescription = "xem được công ca, phiếu lương" },
+                new ChucVu { ChucVuId = 7, ChucVuName = "Customer", ChucVuDescription = "Đặt hàng qua web, tích điểm" },
+                new ChucVu { ChucVuId = 8, ChucVuName = "POS", ChucVuDescription = "máy ở CH để nhân viên order trực tiếp" },
+                new ChucVu { ChucVuId = 9, ChucVuName = "HR", ChucVuDescription = "Phân chức vụ các phòng ban " }
             );
 
             modelBuilder.Entity<TaiKhoanNoiBo>().HasData(

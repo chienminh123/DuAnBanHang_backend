@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\Ipos\" />
     <Folder Include="Migrations\" />
     <Folder Include="wwwroot\images\avatar\" />
     <Folder Include="wwwroot\images\sanpham\" />

@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            border: 1px solid #ddd;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            color: #27ae60;
+            text-align: center;
+            border-bottom: 2px solid #27ae60;
+            padding-bottom: 10px;
+        }
+
+        .info-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #ecf0f1;
+            color: #333;
+        }
+
+        .total-row {
+            font-weight: bold;
+            font-size: 16px;
+            color: #e74c3c;
+            background-color: #fcebeb;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="header">PHIẾU LƯƠNG THÁNG {{Thang}}/{{Nam}}</h2>
+        <p>Xin chào <strong>{{TenNhanVien}}</strong>,</p>
+        <p>Bộ phận Kế toán gửi đến bạn chi tiết bảng lương tháng {{Thang}}/{{Nam}} như sau:</p>
+
+        <div class="info-box">
+            <table>
+                <tr>
+                    <th>Hạng mục</th>
+                    <th style="text-align: right;">Số tiền / Chi tiết</th>
+                </tr>
+                <tr>
+                    <td>Mức lương cơ bản</td>
+                    <td style="text-align: right;">{{MucLuong}}</td>
+                </tr>
+                <tr>
+                    <td>Chỉ số công (Giờ / Ngày)</td>
+                    <td style="text-align: right;"><strong>{{KieuTinhCong}}</strong></td>
+                </tr>
+                <tr>
+                    <td>Phụ cấp Cơm trưa</td>
+                    <td style="text-align: right;">+ {{PhuCapAnTrua}}</td>
+                </tr>
+                <tr>
+                    <td>Phụ cấp Xăng xe</td>
+                    <td style="text-align: right;">+ {{PhuCapXangXe}}</td>
+                </tr>
+                <tr>
+                    <td>Thưởng Chuyên cần</td>
+                    <td style="text-align: right;">+ {{PhuCapChuyenCan}}</td>
+                </tr>
+                <tr>
+                    <td>Phạt đi muộn / Vi phạm</td>
+                    <td style="text-align: right; color: red;">- {{TienPhat}}</td>
+                </tr>
+                <tr class="total-row">
+                    <td>THỰC LÃNH</td>
+                    <td style="text-align: right;">{{ThucLanh}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <p style="margin-top: 20px;">Mọi thắc mắc về bảng lương, vui lòng liên hệ bộ phận Kế toán/HR trong vòng 24h để được giải đáp.</p>
+        <hr />
+        <p class="footer">Đây là email tự động từ Hệ thống quản lý NMCcuteCompany.<br />Vui lòng không trả lời email này.</p>
+    </div>
+</body>
+</html>

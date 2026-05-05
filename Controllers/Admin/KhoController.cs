@@ -29,6 +29,16 @@ namespace backend.Controllers.Admin
             return Ok(list);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllMaterial()
+        {
+            var list = await _context.NguyenLieu
+                .Include(c=>c.TheLoai)
+                .Include(c=>c.DoiTac)
+                .ToListAsync();
+            return Ok(list);
+        }
+
         [HttpPost("nhap_kho")]
         public async Task<IActionResult> NhapKhoList([FromBody] NhapKhoDTO request)
         {
@@ -62,6 +72,8 @@ namespace backend.Controllers.Admin
                             GiaNhap = item.GiaNhap,
                             TheLoaiId = item.TheLoaiId,
                             DoiTacId = request.DoiTacId,
+                            NgaySanXuat= item.NgaySanXuat,
+                            HanSuDung= item.HanSuDung,
                             IsActive = true
                         };
                         _context.NguyenLieu.Add(nguyenlieu);
@@ -141,6 +153,8 @@ namespace backend.Controllers.Admin
                             GiaNhap = item.GiaNhap,
                             TheLoaiId = item.TheLoaiId,
                             DoiTacId = request.DoiTacId,
+                            NgaySanXuat = item.NgaySanXuat,
+                            HanSuDung = item.HanSuDung,
                             IsActive = true
                         };
                         _context.NguyenLieu.Add(nguyenlieu);

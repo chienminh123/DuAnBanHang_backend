@@ -20,7 +20,7 @@ builder.Services.AddCors(options => {
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddTransient<EmailService>();
-
+builder.Services.AddHttpClient();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

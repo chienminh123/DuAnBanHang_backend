@@ -41,7 +41,10 @@ namespace backend.Controllers.Admin
                 ShopName=request.name,
                 ShopPhone=request.phone,
                 ShopAddress=request.address,
-                ShopCity=request.city
+                ShopCity=request.city,
+                Latitude = request.latitude,
+                Longitude = request.longitude,
+                BanKinhChoPhep = request.BanKinhChoPhep > 0 ? request.BanKinhChoPhep : 50
             };
 
             _context.cuaHangs.Add(sp);
@@ -72,10 +75,13 @@ namespace backend.Controllers.Admin
                 return NotFound("k tìm thấy cửa hàng cần sửa");
             }
 
-            if(!string.IsNullOrEmpty(request.name)) sp.ShopName= request.name;
-            if(!string.IsNullOrEmpty(request.phone) && CheckPhone(request.phone)==true) sp.ShopPhone= request.phone;
-            if(!string.IsNullOrEmpty(request.address)) sp.ShopAddress= request.address;
-            if(!string.IsNullOrEmpty(request.city)) sp.ShopCity= request.city;
+            sp.ShopName=!string.IsNullOrEmpty(request.name) ? request.name : sp.ShopName;
+            sp.ShopPhone = !string.IsNullOrEmpty(request.phone) && CheckPhone(request.phone) == true ? request.phone : sp.ShopPhone;
+            sp.ShopAddress = !string.IsNullOrEmpty(request.address) ? request.address : sp.ShopAddress;
+            sp.ShopCity = !string.IsNullOrEmpty(request.city) ? request.city : sp.ShopCity;
+            if (request.latitude.HasValue) sp.Latitude = request.latitude;
+            if (request.longitude.HasValue) sp.Longitude = request.longitude;
+            if (request.BanKinhChoPhep > 0) sp.BanKinhChoPhep = request.BanKinhChoPhep;
 
             await _context.SaveChangesAsync();
             return Ok("sửa thông tin thành công");

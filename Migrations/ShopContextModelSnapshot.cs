@@ -22,6 +22,59 @@ namespace backend.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
+            modelBuilder.Entity("backend.Models.Admin.BangLuong", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("Nam")
+                        .HasColumnType("int");
+
+                    b.Property<double>("PhuCapAnTrua")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PhuCapChuyenCan")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PhuCapXangXe")
+                        .HasColumnType("float");
+
+                    b.Property<int>("TaiKhoanNoiBoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Thang")
+                        .HasColumnType("int");
+
+                    b.Property<double>("TienPhatDiMuon")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TongGioLam")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TongNgayLam")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TongPhuCap")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TongTienNhan")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaiKhoanNoiBoId");
+
+                    b.ToTable("BangLuong");
+                });
+
             modelBuilder.Entity("backend.Models.Admin.BienLai", b =>
                 {
                     b.Property<int>("Id")
@@ -58,6 +111,106 @@ namespace backend.Migrations
                     b.HasIndex("DoiTacId");
 
                     b.ToTable("BienLai");
+                });
+
+            modelBuilder.Entity("backend.Models.Admin.CaLamViec", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<TimeSpan>("GioBatDau")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan>("GioKetThuc")
+                        .HasColumnType("time");
+
+                    b.Property<string>("TenCa")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CaLamViec");
+                });
+
+            modelBuilder.Entity("backend.Models.Admin.CauHinhLuong", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("LoaiLuong")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<double>("MucLuong")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PhuCapAnTrua")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PhuCapChuyenCan")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PhuCapXangXe")
+                        .HasColumnType("float");
+
+                    b.Property<int>("TaiKhoanNoiBoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaiKhoanNoiBoId");
+
+                    b.ToTable("CauHinhLuong");
+                });
+
+            modelBuilder.Entity("backend.Models.Admin.ChamCong", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("CaLamViecId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GhiChu")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("GioRa")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("GioVao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("Ngay")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TaiKhanNoiBoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ChamCong");
                 });
 
             modelBuilder.Entity("backend.Models.Admin.ChiTietBienLai", b =>
@@ -152,55 +305,55 @@ namespace backend.Migrations
                         {
                             ChucVuId = 1,
                             ChucVuDescription = "Người quản lý tất cả. tạo tài khoản các phòng ban",
-                            ChucVuName = "Giám đốc"
+                            ChucVuName = "Admin"
                         },
                         new
                         {
                             ChucVuId = 2,
                             ChucVuDescription = "Người tính lương, duyệt thu chi từ kho và QL khu vực",
-                            ChucVuName = "Kế toán"
+                            ChucVuName = "Accountant"
                         },
                         new
                         {
                             ChucVuId = 3,
                             ChucVuDescription = "Người tiếp nhận đặt hàng từ cửa hàng, đặt hàng với bên thứ 3, phiếu nhập và xuất kho từ CH và bên thứ 3",
-                            ChucVuName = "Sản xuất"
+                            ChucVuName = "Production"
                         },
                         new
                         {
                             ChucVuId = 4,
                             ChucVuDescription = "Người quản lý các CH do GD phân, làm phiếu đề xuất khi CH cần, ql công ca NV cửa hàng",
-                            ChucVuName = "Quản lý khu vực"
+                            ChucVuName = "AreaManager"
                         },
                         new
                         {
                             ChucVuId = 5,
                             ChucVuDescription = "Người đặt thực phẩm với kho, tạo các phiếu điều chuyển giữ các cửa hàng, xem báo cáo doanh thu và đặt thực phẩm",
-                            ChucVuName = "Quản lý cửa hàng"
+                            ChucVuName = "StoreManager"
                         },
                         new
                         {
                             ChucVuId = 6,
                             ChucVuDescription = "xem được công ca, phiếu lương",
-                            ChucVuName = "Nhân viên bán hàng"
+                            ChucVuName = "Sales"
                         },
                         new
                         {
                             ChucVuId = 7,
                             ChucVuDescription = "Đặt hàng qua web, tích điểm",
-                            ChucVuName = "Khách hàng"
+                            ChucVuName = "Customer"
                         },
                         new
                         {
                             ChucVuId = 8,
                             ChucVuDescription = "máy ở CH để nhân viên order trực tiếp",
-                            ChucVuName = "Máy Pos"
+                            ChucVuName = "POS"
                         },
                         new
                         {
                             ChucVuId = 9,
                             ChucVuDescription = "Phân chức vụ các phòng ban ",
-                            ChucVuName = "Nhân sự"
+                            ChucVuName = "HR"
                         });
                 });
 
@@ -211,6 +364,15 @@ namespace backend.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ShopId"), 1L, 1);
+
+                    b.Property<int>("BanKinhChoPhep")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
 
                     b.Property<string>("ShopAddress")
                         .IsRequired()
@@ -283,6 +445,31 @@ namespace backend.Migrations
                     b.ToTable("KiemKe");
                 });
 
+            modelBuilder.Entity("backend.Models.Admin.LichLamViec", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
+
+                    b.Property<int>("CaLamViecId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayLamViec")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ShopId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TaiKhoanNoiBoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("LichLamViec");
+                });
+
             modelBuilder.Entity("backend.Models.Admin.MaGiamGia", b =>
                 {
                     b.Property<int>("Id")
@@ -319,6 +506,32 @@ namespace backend.Migrations
                     b.ToTable("MaGiamGia");
                 });
 
+            modelBuilder.Entity("backend.Models.Admin.MenuCuaHang", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SanPhamId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShopId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SanPhamId");
+
+                    b.HasIndex("ShopId");
+
+                    b.ToTable("MenuCuaHang");
+                });
+
             modelBuilder.Entity("backend.Models.Admin.NguyenLieu", b =>
                 {
                     b.Property<int>("NguyenLieuId")
@@ -337,11 +550,14 @@ namespace backend.Migrations
                     b.Property<decimal>("GiaNhap")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("Id")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("HanSuDung")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime>("NgaySanXuat")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("NguyenLieuName")
                         .IsRequired()
@@ -352,7 +568,7 @@ namespace backend.Migrations
 
                     b.HasKey("NguyenLieuId");
 
-                    b.HasIndex("Id");
+                    b.HasIndex("DoiTacId");
 
                     b.HasIndex("TheLoaiId");
 
@@ -471,12 +687,12 @@ namespace backend.Migrations
                             Email = "cn908820@gmail.com",
                             GioiTinh = false,
                             IsActive = true,
-                            MatKhau = "$2a$11$k4wlmXvDdX2rlleAgDk9BOI66WTWUmunNfvSkSZxeK3uY3/j/0.bm",
+                            MatKhau = "$2a$11$2BuHENwalGt2xGAiAqtwYuapmAxEj/pwJ2NJofiJ3dp/rHaINK06.",
                             NgaySinh = new DateTime(2004, 4, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             NgayThamGia = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Sdt = "0909999999",
                             TenNhanVien = "Nguyễn Minh Chiến",
-                            TenTaiKhoan = "nmchien@food.com"
+                            TenTaiKhoan = "nmchien@giamdoc.food.com"
                         });
                 });
 
@@ -570,6 +786,248 @@ namespace backend.Migrations
                     b.ToTable("tonKhos");
                 });
 
+            modelBuilder.Entity("backend.Models.Client.Cart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("KhachHangId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayCapNhat")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KhachHangId");
+
+                    b.ToTable("Cart");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.CartDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsKhongNau")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("RauCuNguyenLieuId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SanPhamId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartId");
+
+                    b.HasIndex("RauCuNguyenLieuId");
+
+                    b.ToTable("CartDetail");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.CartDetailTopping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("CartDetailId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToppingSanPhamId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartDetailId");
+
+                    b.HasIndex("ToppingSanPhamId");
+
+                    b.ToTable("CartDetailTopping");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("DiaChiGiaoHang")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<double>("DiemCongThem")
+                        .HasColumnType("float");
+
+                    b.Property<double>("DiemSuDung")
+                        .HasColumnType("float");
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsThanhToan")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("KhachHangId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LoaiDonHang")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MaDonHang")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("PhiGiaoHang")
+                        .HasColumnType("float");
+
+                    b.Property<string>("PhuongThucThanhToan")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SdtNguoiNhan")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("ShopId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TaiKhoanNoiBoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenNguoiNhan")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<double>("ThanhTien")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TienGiamGia")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TongTienHang")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TrangThaiDonHang")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KhachHangId");
+
+                    b.HasIndex("ShopId");
+
+                    b.HasIndex("TaiKhoanNoiBoId");
+
+                    b.ToTable("Order");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.OrderDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<double>("DonGia")
+                        .HasColumnType("float");
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsKhongNau")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RauCuNguyenLieuId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SanPhamId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.Property<double>("ThanhTien")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("RauCuNguyenLieuId");
+
+                    b.ToTable("OrderDetail");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.OrderDetailTopping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<double>("GiaTopping")
+                        .HasColumnType("float");
+
+                    b.Property<int>("OrderDetailId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToppingSanPhamId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderDetailId");
+
+                    b.HasIndex("ToppingSanPhamId");
+
+                    b.ToTable("OrderDetailTopping");
+                });
+
             modelBuilder.Entity("backend.Models.Client.TaiKhoanKhachHang", b =>
                 {
                     b.Property<int>("KhachHangId")
@@ -614,6 +1072,17 @@ namespace backend.Migrations
                     b.ToTable("taiKhoanKhachHang");
                 });
 
+            modelBuilder.Entity("backend.Models.Admin.BangLuong", b =>
+                {
+                    b.HasOne("backend.Models.Admin.TaiKhoanNoiBo", "TaiKhoanNoiBo")
+                        .WithMany()
+                        .HasForeignKey("TaiKhoanNoiBoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaiKhoanNoiBo");
+                });
+
             modelBuilder.Entity("backend.Models.Admin.BienLai", b =>
                 {
                     b.HasOne("backend.Models.Admin.CuaHang", "CuaHang")
@@ -629,6 +1098,17 @@ namespace backend.Migrations
                     b.Navigation("CuaHang");
 
                     b.Navigation("DoiTac");
+                });
+
+            modelBuilder.Entity("backend.Models.Admin.CauHinhLuong", b =>
+                {
+                    b.HasOne("backend.Models.Admin.TaiKhoanNoiBo", "TaiKhoanNoiBo")
+                        .WithMany()
+                        .HasForeignKey("TaiKhoanNoiBoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaiKhoanNoiBo");
                 });
 
             modelBuilder.Entity("backend.Models.Admin.ChiTietBienLai", b =>
@@ -680,11 +1160,30 @@ namespace backend.Migrations
                     b.Navigation("CuaHang");
                 });
 
+            modelBuilder.Entity("backend.Models.Admin.MenuCuaHang", b =>
+                {
+                    b.HasOne("backend.Models.Admin.SanPham", "SanPham")
+                        .WithMany()
+                        .HasForeignKey("SanPhamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Admin.CuaHang", "CuaHang")
+                        .WithMany()
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CuaHang");
+
+                    b.Navigation("SanPham");
+                });
+
             modelBuilder.Entity("backend.Models.Admin.NguyenLieu", b =>
                 {
                     b.HasOne("backend.Models.Admin.DoiTac", "DoiTac")
                         .WithMany()
-                        .HasForeignKey("Id");
+                        .HasForeignKey("DoiTacId");
 
                     b.HasOne("backend.Models.Admin.TheLoai", "TheLoai")
                         .WithMany()
@@ -752,6 +1251,112 @@ namespace backend.Migrations
                     b.Navigation("NguyenLieu");
                 });
 
+            modelBuilder.Entity("backend.Models.Client.Cart", b =>
+                {
+                    b.HasOne("backend.Models.Client.TaiKhoanKhachHang", "KhachHang")
+                        .WithMany()
+                        .HasForeignKey("KhachHangId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("KhachHang");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.CartDetail", b =>
+                {
+                    b.HasOne("backend.Models.Client.Cart", "Cart")
+                        .WithMany("CartDetails")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Admin.NguyenLieu", "RauCu")
+                        .WithMany()
+                        .HasForeignKey("RauCuNguyenLieuId");
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("RauCu");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.CartDetailTopping", b =>
+                {
+                    b.HasOne("backend.Models.Client.CartDetail", "CartDetail")
+                        .WithMany("Toppings")
+                        .HasForeignKey("CartDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Admin.SanPham", "SanPhamTopping")
+                        .WithMany()
+                        .HasForeignKey("ToppingSanPhamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CartDetail");
+
+                    b.Navigation("SanPhamTopping");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.Order", b =>
+                {
+                    b.HasOne("backend.Models.Client.TaiKhoanKhachHang", "KhachHang")
+                        .WithMany()
+                        .HasForeignKey("KhachHangId");
+
+                    b.HasOne("backend.Models.Admin.CuaHang", "CuaHang")
+                        .WithMany()
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Admin.TaiKhoanNoiBo", "TaiKhoanPOS")
+                        .WithMany()
+                        .HasForeignKey("TaiKhoanNoiBoId");
+
+                    b.Navigation("CuaHang");
+
+                    b.Navigation("KhachHang");
+
+                    b.Navigation("TaiKhoanPOS");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.OrderDetail", b =>
+                {
+                    b.HasOne("backend.Models.Client.Order", "Order")
+                        .WithMany("OrderDetails")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Admin.NguyenLieu", "RauCu")
+                        .WithMany()
+                        .HasForeignKey("RauCuNguyenLieuId");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("RauCu");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.OrderDetailTopping", b =>
+                {
+                    b.HasOne("backend.Models.Client.OrderDetail", "OrderDetail")
+                        .WithMany("OrderDetailToppings")
+                        .HasForeignKey("OrderDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.Admin.SanPham", "SanPhamTopping")
+                        .WithMany()
+                        .HasForeignKey("ToppingSanPhamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrderDetail");
+
+                    b.Navigation("SanPhamTopping");
+                });
+
             modelBuilder.Entity("backend.Models.Client.TaiKhoanKhachHang", b =>
                 {
                     b.HasOne("backend.Models.Admin.ChucVu", "ChucVu")
@@ -771,6 +1376,26 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Admin.TheLoai", b =>
                 {
                     b.Navigation("sanPhams");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.Cart", b =>
+                {
+                    b.Navigation("CartDetails");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.CartDetail", b =>
+                {
+                    b.Navigation("Toppings");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.Order", b =>
+                {
+                    b.Navigation("OrderDetails");
+                });
+
+            modelBuilder.Entity("backend.Models.Client.OrderDetail", b =>
+                {
+                    b.Navigation("OrderDetailToppings");
                 });
 #pragma warning restore 612, 618
         }

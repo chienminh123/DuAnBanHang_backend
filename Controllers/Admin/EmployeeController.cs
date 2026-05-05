@@ -1,4 +1,4 @@
-﻿using backend.Data;
+using backend.Data;
 using backend.DTOs.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -25,14 +25,41 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> GetAll()
         {
             var list = await _context.TaiKhoanNoiBo
-                    .Include(s => s.ChucVu )
-                    .Include(s => s.CuaHang )
-                    .ToListAsync();
+                .AsNoTracking()
+                .Include(s => s.ChucVu)
+                .Include(s => s.CuaHang)
+                .Select(s => new
+                {
+                    s.TaiKhoanNoiBoId,
+                    s.TenTaiKhoan,
+                    s.ChucVuId,
+                    s.CuaHangId,
+                    s.TenNhanVien,
+                    s.GioiTinh,
+                    s.Sdt,
+                    s.Email,
+                    s.Avatar,
+                    s.NgaySinh,
+                    s.NgayThamGia,
+                    s.IsActive,
+                    ChucVu = s.ChucVu == null ? null : new
+                    {
+                        s.ChucVu.ChucVuId,
+                        s.ChucVu.ChucVuName
+                    },
+                    CuaHang = s.CuaHang == null ? null : new
+                    {
+                        s.CuaHang.ShopId,
+                        s.CuaHang.ShopName
+                    }
+                })
+                .ToListAsync();
+
             return Ok(list);
         }
 
-        [HttpDelete("id")]
-        //[Authorize(Roles = "Giám đốc, Nhân sự")]
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, HR")]
         public async Task<IActionResult> Delete(int id)
         {
             var nv = await _context.TaiKhoanNoiBo.FindAsync(id);
@@ -54,38 +81,38 @@ namespace backend.Controllers.Admin
         }
 
         [HttpPut("admin-update/{id}")]
-        //[Authorize(Roles = "Giám đốc, Nhân sự")]
+        [Authorize(Roles = "Admin, HR")]
         public async Task<IActionResult> UpdateByAdmin(int id, [FromForm] NhanVienDTO request, [FromForm] int? newChucVuId, [FromForm] int? newCuaHangId, [FromForm] string? newTenDangNhap)
         {
             var nv = await _context.TaiKhoanNoiBo.FindAsync(id);
             if (nv == null) return NotFound();
 
-            if (!string.IsNullOrEmpty(nv.Avatar)) nv.TenTaiKhoan = newTenDangNhap;
+            if (!string.IsNullOrEmpty(newTenDangNhap)) nv.TenTaiKhoan = newTenDangNhap;
             if (!string.IsNullOrEmpty(request.name)) nv.TenNhanVien = request.name;
             if (!string.IsNullOrEmpty(request.sdt)&&CheckPhone(request.sdt)==true) nv.Sdt = request.sdt;
             if (!string.IsNullOrEmpty(request.email)) nv.Email = request.email;
-            if (request.NgaySinh != null) nv.NgaySinh = request.NgaySinh;
-            if (request.GioiTinh != null) nv.GioiTinh = request.GioiTinh;
-            if (request.AvatarUpload != null)
-            {
+            if (request.NgaySinh != null) nv.NgaySinh = request.NgaySinh.Value;
+            if (request.GioiTinh != null) nv.GioiTinh = request.GioiTinh.Value;
+            //if (request.AvatarUpload != null)
+            //{
 
-                if (!string.IsNullOrEmpty(nv.Avatar))
-                {
-                    var oldPath = Path.Combine(_env.WebRootPath, nv.Avatar.TrimStart('/'));
-                    if (System.IO.File.Exists(oldPath))
-                    {
-                        System.IO.File.Delete(oldPath);
-                    }
-                }
-                var tenFile = Guid.NewGuid().ToString() + Path.GetExtension(request.AvatarUpload.FileName);
-                var path = Path.Combine(_env.WebRootPath, "images", "avatar", tenFile);
+            //    if (!string.IsNullOrEmpty(nv.Avatar))
+            //    {
+            //        var oldPath = Path.Combine(_env.WebRootPath, nv.Avatar.TrimStart('/'));
+            //        if (System.IO.File.Exists(oldPath))
+            //        {
+            //            System.IO.File.Delete(oldPath);
+            //        }
+            //    }
+            //    var tenFile = Guid.NewGuid().ToString() + Path.GetExtension(request.AvatarUpload.FileName);
+            //    var path = Path.Combine(_env.WebRootPath, "images", "avatar", tenFile);
 
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    await request.AvatarUpload.CopyToAsync(stream);
-                }
-                nv.Avatar = "/images/avatar/" + tenFile;
-            }
+            //    using (var stream = new FileStream(path, FileMode.Create))
+            //    {
+            //        await request.AvatarUpload.CopyToAsync(stream);
+            //    }
+            //    nv.Avatar = "/images/avatar/" + tenFile;
+            //}
 
             if (newChucVuId != null) nv.ChucVuId = newChucVuId.Value;
             if (newCuaHangId != null) nv.CuaHangId = newCuaHangId.Value;
@@ -106,11 +133,13 @@ namespace backend.Controllers.Admin
             var nv = await _context.TaiKhoanNoiBo.FindAsync(id);
             if (nv == null) return NotFound();
 
-            if (!string.IsNullOrEmpty(request.name)) nv.TenNhanVien = request.name;
-            if (!string.IsNullOrEmpty(request.sdt) && CheckPhone(request.sdt) == true) nv.Sdt = request.sdt;
-            if (!string.IsNullOrEmpty(request.email)) nv.Email = request.email;
-            if (request.NgaySinh != null) nv.NgaySinh = request.NgaySinh;
-            if (request.GioiTinh != null) nv.GioiTinh = request.GioiTinh;
+            nv.TenNhanVien= !string.IsNullOrEmpty(request.name) ? request.name : nv.TenNhanVien;
+            nv.Sdt = !string.IsNullOrEmpty(request.sdt) && CheckPhone(request.sdt) == true ? request.sdt : nv.Sdt;
+            nv.Email=!string.IsNullOrEmpty(request.email) ? request.email : nv.Email;
+            //if (request.NgaySinh != null) nv.NgaySinh = request.NgaySinh;
+            nv.NgaySinh = request.NgaySinh != null ? request.NgaySinh.Value : nv.NgaySinh;
+            //if (request.GioiTinh != null) nv.GioiTinh = request.GioiTinh;
+            nv.GioiTinh = request.GioiTinh != null ? request.GioiTinh.Value : nv.GioiTinh;
 
             await _context.SaveChangesAsync();
             return Ok("Cập nhật thông tin cá nhân thành công!");
@@ -118,7 +147,8 @@ namespace backend.Controllers.Admin
 
         [HttpPatch("update-avatar")]
         [Authorize]
-        public async Task<IActionResult> UpdateAvatar([FromForm] IFormFile avatar)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateAvatar([FromForm] AvatarUpdateDTO request)
         {
             var userIdStr = User.FindFirst("Id")?.Value;
             if (userIdStr == null) return Unauthorized("Không tìm thấy thông tin đăng nhập");
@@ -127,7 +157,7 @@ namespace backend.Controllers.Admin
             var nv = await _context.TaiKhoanNoiBo.FindAsync(id);
             if (nv == null) return NotFound();
 
-            if (avatar != null && avatar.Length > 0)
+            if (request.AvatarUpload != null && request.AvatarUpload.Length > 0)
             {
 
                 if (!string.IsNullOrEmpty(nv.Avatar))
@@ -138,12 +168,12 @@ namespace backend.Controllers.Admin
                         System.IO.File.Delete(oldPath);
                     }
                 }              
-                var tenFile = Guid.NewGuid().ToString() + Path.GetExtension(avatar.FileName);
+                var tenFile = Guid.NewGuid().ToString() + Path.GetExtension(request.AvatarUpload.FileName);
                 var path = Path.Combine(_env.WebRootPath, "images", "avatar", tenFile);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {
-                    await avatar.CopyToAsync(stream);
+                    await request.AvatarUpload.CopyToAsync(stream);
                 }
                 nv.Avatar = "/images/avatar/" + tenFile;
                 await _context.SaveChangesAsync();
@@ -154,7 +184,7 @@ namespace backend.Controllers.Admin
 
         [HttpPatch("update-password")]
         [Authorize]
-        public async Task<IActionResult> ChangePassword([FromForm] string matKhauMoi)
+        public async Task<IActionResult> ChangePassword([FromForm] string matKhauMoi1,[FromForm]string matKhauMoi2)
         {
             var userIdStr = User.FindFirst("Id")?.Value;
             if (userIdStr == null) return Unauthorized();
@@ -162,12 +192,14 @@ namespace backend.Controllers.Admin
             var nv = await _context.TaiKhoanNoiBo.FindAsync(id);
             if (nv == null) return NotFound();
 
-            if (string.IsNullOrEmpty(matKhauMoi) || matKhauMoi.Length < 6)
+            if (string.IsNullOrEmpty(matKhauMoi1) || matKhauMoi1.Length < 6 )
                 return BadRequest("Mật khẩu mới phải có ít nhất 6 ký tự");
-            else if (matKhauMoi == nv.MatKhau)
+            else if (matKhauMoi1 == nv.MatKhau)
                 return BadRequest("Mật khẩu mới phải khác mật khẩu cũ");
+            else if (matKhauMoi1 != matKhauMoi2)
+                return BadRequest("Mật khẩu mới nhập lại không khớp");
             // Hash mật khẩu mới
-            nv.MatKhau = BCrypt.Net.BCrypt.HashPassword(matKhauMoi);
+            nv.MatKhau = BCrypt.Net.BCrypt.HashPassword(matKhauMoi1);
 
             await _context.SaveChangesAsync();
             return Ok("Đổi mật khẩu thành công!");

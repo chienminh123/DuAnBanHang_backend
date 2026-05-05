@@ -12,5 +12,8 @@ namespace backend.DTOs.Admin
         public string address { get; set; }
         
         public string city { get; set; }
+        public double? latitude { get; set; }
+        public double? longitude { get; set; }
+        public int BanKinhChoPhep { get; set; }
     }
 }

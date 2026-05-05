@@ -20,7 +20,9 @@
             public int TheLoaiId { get; set; }
             public float SoLuong { get; set; }
             public decimal GiaNhap { get; set; }
-            public string? GhiChu { get; set; }
+            public DateTime  NgaySanXuat { get; set; }
+            public DateTime HanSuDung { get; set; }
+        public string? GhiChu { get; set; }
         } 
     
 }

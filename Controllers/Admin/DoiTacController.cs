@@ -32,11 +32,11 @@ namespace backend.Controllers.Admin
             var dt = await _context.DoiTac.FirstOrDefaultAsync(d => d.Name == request.name.Trim());
             if(dt != null)
             {
-                return BadRequest("Đối tác này đã tồn tại !");
+                return NotFound("Đối tác này đã tồn tại !");
             }
             if (CheckPhone(request.phone)==false)
             {
-                return BadRequest("sdt k đúng định dạng");
+                return NotFound("sdt k đúng định dạng");
             }
             var newDT = new DoiTac
             {
@@ -56,12 +56,12 @@ namespace backend.Controllers.Admin
             var doitac= await _context.DoiTac.FirstOrDefaultAsync(d=>d.Id==id);
             if (doitac == null)
             {
-                return BadRequest("K tìm thấy đối tác này ");
+                return NotFound("K tìm thấy đối tác này ");
             }
-            if(!string.IsNullOrEmpty(request.name)) doitac.Name = request.name;
-            if(!string.IsNullOrEmpty(request.phone) && CheckPhone(request.phone)==true) doitac.Phone = request.phone;
-            if(!string.IsNullOrEmpty(request.address)) doitac.Address = request.address;
-            if(!string.IsNullOrEmpty(request.email)) doitac.Email = request.email;
+            doitac.Name= !string.IsNullOrEmpty(request.name) ? request.name : doitac.Name;
+            doitac.Phone = !string.IsNullOrEmpty(request.phone) && CheckPhone(request.phone) == true ? request.phone : doitac.Phone;
+            doitac.Address = !string.IsNullOrEmpty(request.address) ? request.address : doitac.Address;
+            doitac.Email = !string.IsNullOrEmpty(request.email) ? request.email : doitac.Email;
             await _context.SaveChangesAsync();
             return Ok("Cập nhật thành công");
         }
@@ -70,7 +70,7 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> Delete(int id)
         {
             var dt= await _context.DoiTac.FirstOrDefaultAsync(s=>s.Id==id);
-            if (dt == null) return BadRequest("k tim thấy đối tác này");
+            if (dt == null) return NotFound("k tim thấy đối tác này");
             _context.DoiTac.Remove(dt);
             await _context.SaveChangesAsync();
             return Ok("xoa thành công ");
@@ -88,7 +88,7 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> SearchById([FromQuery] int id)
         {
             var dt= await _context.DoiTac.FirstOrDefaultAsync(s=>s.Id == id);   
-            if (dt == null) return BadRequest("k tìm thấy đối tác này ");
+            if (dt == null) return NotFound("k tìm thấy đối tác này ");
             return Ok(dt);
         }
 
@@ -96,7 +96,6 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> SearchByPhone([FromQuery] string key)
         {
             var dt = await _context.DoiTac.Where(s=>s.Phone.Contains(key)).ToListAsync();
-            if (dt == null) return BadRequest("k tìm thấy đối tác này ");
             return Ok(dt);
         }
 
@@ -104,7 +103,6 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> SearchByName([FromQuery] string key)
         {
             var dt = await _context.DoiTac.Where(s => s.Name.Contains(key)).ToListAsync();
-            if (dt == null) return BadRequest("k tìm thấy đối tác này ");
             return Ok(dt);
         }
 
@@ -112,7 +110,6 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> SearchByAddress([FromQuery] string key)
         {
             var dt = await _context.DoiTac.Where(s => s.Address.Contains(key)).ToListAsync();
-            if (dt == null) return BadRequest("k tìm thấy đối tác này ");
             return Ok(dt);
         }
     }

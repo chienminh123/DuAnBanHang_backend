@@ -16,6 +16,10 @@ namespace backend.Models.Admin
         [Column(TypeName = "decimal(18,2)")]
         public decimal GiaNhap { get; set; }
         [Required]
+        public DateTime NgaySanXuat { get; set; }
+        [Required]
+        public DateTime HanSuDung { get; set; }
+        [Required]
         public int TheLoaiId { get; set; }
         public bool IsActive { get; set; }
         [ForeignKey("TheLoaiId")]

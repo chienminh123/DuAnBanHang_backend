@@ -28,35 +28,58 @@ namespace backend.Controllers.Client
         }
 
         [HttpPost("send-otp")]
-        public async Task<IActionResult> SendOtp([FromBody] string email)
+        public async Task<IActionResult> SendOtp([FromBody] RegisterClientDTO request)
         {
-            if (await _context.taiKhoanKhachHang.AnyAsync(u => u.Email == email))
+            // Validate email chưa tồn tại
+            if (await _context.taiKhoanKhachHang.AnyAsync(u => u.Email == request.Email))
             {
-                return BadRequest("Tai Khoản này đã tồn tại!");
+                return BadRequest("Tài khoản với email này đã tồn tại!");
             }
+
+            
+            if (!System.Text.RegularExpressions.Regex.IsMatch(request.sdt, @"^\d{10,11}$"))
+            {
+                return BadRequest("Số điện thoại không hợp lệ!");
+            }
+
             Random generator = new Random();
             string otpCode = generator.Next(0, 1000000).ToString("D6");
-            _memoryCache.Set("OTP_" + email, otpCode, TimeSpan.FromMinutes(5));
+            _memoryCache.Set("OTP_" + request.Email, otpCode, TimeSpan.FromMinutes(5));
             string subject = "Mã xác thực đăng ký NMCcuteShop";
             string body = $"Mã OTP của bạn là: {otpCode}. Mã có hiệu lực trong 5 phút.";
             try
             {
-                await _emailService.SendEmailAsync(email, subject, body);
-                return Ok($"Đã gửi mã OTP về email {email}. Vui lòng kiểm tra hộp thư!");
+                await _emailService.SendEmailAsync(request.Email, subject, body);
+                return Ok($"Đã gửi mã OTP về email {request.Email}. Vui lòng kiểm tra hộp thư!");
             }
             catch (Exception ex)
             {
                 return StatusCode(500, "Lỗi gửi mail: " + ex.Message);
             }
         }
-        [HttpPost("regsiter")]
-        public async Task<IActionResult> Regsiter_client(RegisterClientDTO request,string otpCode)
+
+        [HttpPost("resend-otp")]
+        public async Task<IActionResult> ResendOtp([FromBody] string email)
+        {
+            if (string.IsNullOrEmpty(email)) return BadRequest("Email không hợp lệ.");
+            string otpCode = new Random().Next(100000, 999999).ToString();
+
+            // Lưu vào Cache (đè lên mã cũ)
+            _memoryCache.Set("OTP_" + email, otpCode, TimeSpan.FromMinutes(5));
+
+            await _emailService.SendEmailAsync(email, "Gửi lại mã OTP xác nhận", $"Mã OTP mới của bạn là: <b>{otpCode}</b>");
+
+            return Ok(new { Message = "Mã OTP mới đã được gửi vào Email của bạn." });
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register_client(RegisterClientDTO request)
         {
             if (!_memoryCache.TryGetValue("OTP_" + request.Email, out string savedOtp))
             {
                 return BadRequest("Mã OTP đã hết hạn hoặc chưa được gửi.");
             }
-            if (savedOtp != otpCode)
+            if (savedOtp != request.OtpCode)
             {
                 return BadRequest("Mã OTP không chính xác.");
             }

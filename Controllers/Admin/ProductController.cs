@@ -12,7 +12,7 @@ namespace backend.Controllers.Admin
     public class ProductController : ControllerBase
     {
         private readonly ShopContext _context;
-        private readonly IWebHostEnvironment _env; // Cần cái này để lấy đường dẫn lưu ảnh
+        private readonly IWebHostEnvironment _env; 
 
         public ProductController(ShopContext context,IWebHostEnvironment env)
         {

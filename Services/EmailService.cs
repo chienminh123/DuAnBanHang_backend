@@ -45,5 +45,26 @@ namespace backend.Services
 
             await SendEmailAsync(toEmail, "[Hệ thống] Thông tin tài khoản nhân viên mới", body);
         }
+
+        public async Task SendPayslipEmailAsync(string toEmail, string tenNhanVien, int thang, int nam,
+            string kieuTinhCong, string mucLuong, string phuCapAnTrua, string phuCapXangXe,
+            string phuCapChuyenCan, string tienPhat, string thucLanh)
+        {
+            string filePath = Path.Combine(_env.WebRootPath, "templates", "PayslipEmail.html");
+            string body = await File.ReadAllTextAsync(filePath);
+
+            body = body.Replace("{{TenNhanVien}}", tenNhanVien)
+                       .Replace("{{Thang}}", thang.ToString())
+                       .Replace("{{Nam}}", nam.ToString())
+                       .Replace("{{KieuTinhCong}}", kieuTinhCong)
+                       .Replace("{{MucLuong}}", mucLuong)
+                       .Replace("{{PhuCapAnTrua}}", phuCapAnTrua)
+                       .Replace("{{PhuCapXangXe}}", phuCapXangXe)
+                       .Replace("{{PhuCapChuyenCan}}", phuCapChuyenCan)
+                       .Replace("{{TienPhat}}", tienPhat)
+                       .Replace("{{ThucLanh}}", thucLanh);
+
+            await SendEmailAsync(toEmail, $"[Kế toán] Bảng lương tháng {thang}/{nam} - {tenNhanVien}", body);
+        }
     }
 }

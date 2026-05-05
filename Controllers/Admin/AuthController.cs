@@ -36,7 +36,7 @@ namespace backend.Controllers.Admin
         }
 
         [HttpPost("register")]
-        //[Authorize(Roles = "Giám đốc, Nhân sự")]
+        [Authorize(Roles = "Admin, HR")]
         public async Task<IActionResult> Register_NoiBo([FromForm] RegisterAdminDTO request)
         {
             if (await _context.TaiKhoanNoiBo.AnyAsync(u => u.TenTaiKhoan == request.TenTaiKhoan)) 
@@ -98,6 +98,7 @@ namespace backend.Controllers.Admin
         {
             var user = await _context.TaiKhoanNoiBo
                                     .Include(u => u.ChucVu)
+                                    .Include(u => u.CuaHang)
                                     .FirstOrDefaultAsync(u=>u.TenTaiKhoan==request.TenTaiKhoan);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.MatKhau, user.MatKhau))
@@ -105,7 +106,12 @@ namespace backend.Controllers.Admin
                 return BadRequest("Tên tài khoản hoặc mật khẩu không đúng!");
             }
             string token = _tokenService.CreateToken(user.TenTaiKhoan,user.ChucVu.ChucVuName,user.TaiKhoanNoiBoId.ToString());
-            return Ok(new {token=token ,Message = "Đăng nhập thành công!" });
+            return Ok(new {
+                token=token ,
+                Message = "Đăng nhập thành công!" ,
+                tenCuaHang = user.CuaHang != null ? user.CuaHang.ShopName : "Cửa hàng chính",
+                shopId = user.CuaHangId ?? 1
+            });
         }
 
         private bool CheckPhone(string phone)

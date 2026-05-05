@@ -50,7 +50,7 @@ namespace backend.Controllers.Admin
             discount.SoLuong= request.SoLuong ?? discount.SoLuong;
             discount.NgayBatDau= request.NgayBatDau ?? discount.NgayBatDau;
             discount.NgayKetThuc= request.NgayKetThuc ?? discount.NgayKetThuc;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok("cập nhật thành công ma giảm giá");
         }
 
@@ -68,13 +68,13 @@ namespace backend.Controllers.Admin
             });
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> Create([FromForm]DiscountDTO request)
         {
             var discount= await _context.MaGiamGia.FirstOrDefaultAsync(d=>d.Code== request.Code.Trim());
             if (discount != null)
             {
-                return NotFound("mã giảm giá này đã tồn tại ");
+                return BadRequest("mã giảm giá này đã tồn tại ");
             }
 
             var newDiscount = new MaGiamGia
@@ -87,6 +87,8 @@ namespace backend.Controllers.Admin
                 NgayKetThuc = request.NgayKetThuc ?? DateTime.Now.AddDays(7),
                 IsActive = true
             };
+            _context.MaGiamGia.Add(newDiscount);
+            await _context.SaveChangesAsync();
             return Ok("taoj thanh coong mã giảm giá ");
         }
 
@@ -95,7 +97,7 @@ namespace backend.Controllers.Admin
         {
             if(string.IsNullOrEmpty(code)) return await GetAll();
             var discount= await _context.MaGiamGia.Where(d=>d.Code.Contains(code)).ToListAsync();
-            if (discount != null)
+            if (discount == null)
             {
                 return NotFound("k tìm thấy mã phù hợp ");
             }
@@ -106,7 +108,7 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> SearchByDate([FromQuery]DateTime date1,[FromQuery]DateTime date2)
         {
             var discount=await _context.MaGiamGia.Where(d=>d.NgayBatDau>=date1 && d.NgayKetThuc<=date2).ToListAsync();
-            if (discount != null)
+            if (discount == null)
             {
                 NotFound("k tìm thấy mã nào trong khoảng thời gian này ");
             }

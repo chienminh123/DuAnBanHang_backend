@@ -11,5 +11,6 @@ namespace backend.DTOs.Client
         [Required]
         public string MatKhau { get; set; }
         public DateTime NgaySinh { get; set; }
+        public string? OtpCode { get; set; } 
     }
 }
