@@ -20,12 +20,12 @@ namespace backend.Controllers.Admin
         }
 
         [HttpGet("get_by_shop/{id}")]
-        public async Task<IActionResult> GetByShop( int id)
+        public async Task<IActionResult> GetByShop(int id)
         {
-            var list= await _context.tonKhos
-                .Include(tk=>tk.NguyenLieu)
-                .Include(tk=>tk.CuaHang)
-                .Where(tk=>tk.ShopId==id).ToListAsync();
+            var list = await _context.tonKhos
+                .Include(tk => tk.NguyenLieu)
+                .Include(tk => tk.CuaHang)
+                .Where(tk => tk.ShopId == id).ToListAsync();
             return Ok(list);
         }
 
@@ -33,8 +33,8 @@ namespace backend.Controllers.Admin
         public async Task<IActionResult> GetAllMaterial()
         {
             var list = await _context.NguyenLieu
-                .Include(c=>c.TheLoai)
-                .Include(c=>c.DoiTac)
+                .Include(c => c.TheLoai)
+                .Include(c => c.DoiTac)
                 .ToListAsync();
             return Ok(list);
         }
@@ -42,108 +42,23 @@ namespace backend.Controllers.Admin
         [HttpPost("nhap_kho")]
         public async Task<IActionResult> NhapKhoList([FromBody] NhapKhoDTO request)
         {
-            using var transaction=_context.Database.BeginTransaction();
-            try
-            {
-                //bieen lai
-                var bienlai = new BienLai
-                {
-                    HanhDong = request.HanhDong,
-                    CuaHangId = (int) request.KhoNhapId,
-                    // FE nếu hd là nhập ncc thì hiện danh sách ncc , DIèu chuyển nội bộ là ds ch
-                    DoiTacId = request.HanhDong == "NHAP_NCC" ? request.DoiTacId : null,
-                    KhoXuatId = request.HanhDong == "NHAP_DIEU_CHUYEN_NOI_BO" ? request.KhoXuatId : null, 
-                    NgayThucHien = DateTime.Now,
-                    TrangThai="CHO_XAC_NHAN"
-                };
-                _context.BienLai.Add(bienlai);
-                await _context.SaveChangesAsync();
-
-                foreach (var item in request.Items) 
-                {
-                    var nguyenlieu = await _context.NguyenLieu
-                            .FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim() && nl.DoiTacId == request.DoiTacId);
-                    if(nguyenlieu == null)
-                    {
-                        nguyenlieu = new NguyenLieu
-                        {
-                            NguyenLieuName = item.NguyenLieuName,
-                            DonVi = item.DonVi,
-                            GiaNhap = item.GiaNhap,
-                            TheLoaiId = item.TheLoaiId,
-                            DoiTacId = request.DoiTacId,
-                            NgaySanXuat= item.NgaySanXuat,
-                            HanSuDung= item.HanSuDung,
-                            IsActive = true
-                        };
-                        _context.NguyenLieu.Add(nguyenlieu);
-                        await _context.SaveChangesAsync();
-                    }
-
-                    var chiTiet = new ChiTietBienLai
-                    {
-                        BienLaiId = bienlai.Id,
-                        NguyenLieuId = nguyenlieu.NguyenLieuId,
-                        Soluong = item.SoLuong,
-                        GhiChu = item.GhiChu
-                    };
-                    _context.ChiTietBienLai.Add(chiTiet);
-                   
-
-                    var KhoNhan = await _context.tonKhos
-                        .FirstOrDefaultAsync(tk=>tk.ShopId==request.KhoNhapId && tk.NguyenLieuId ==nguyenlieu.NguyenLieuId);
-                    if (KhoNhan == null)
-                    {
-                        KhoNhan = new TonKho
-                        {
-                            ShopId = (int) request.KhoNhapId,
-                            NguyenLieuId = nguyenlieu.NguyenLieuId,
-                            SoLuong = item.SoLuong
-                        };
-                        _context.tonKhos.Add(KhoNhan);
-                        
-                    }
-                    else
-                    {
-                        KhoNhan.SoLuong += item.SoLuong;
-                    }
- 
-                }
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-                return Ok("Nhập kho thanh công lô hàng");
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return BadRequest("Lỗi Nhập Kho :" + ex.Message);
-            }
-        }
-        [HttpPost("xuat_kho")]
-        public async Task<IActionResult> XuatKhoList([FromBody] NhapKhoDTO request)
-        {
             using var transaction = _context.Database.BeginTransaction();
             try
             {
-                //bieen lai
                 var bienlai = new BienLai
                 {
                     HanhDong = request.HanhDong,
-                    CuaHangId = (int) request.KhoXuatId,
-                    // FE nếu hd là nhập ncc thì hiện danh sách ncc , DIèu chuyển nội bộ là ds ch
-                    
-                    DoiTacId = request.HanhDong == "XUAT_TRA_NCC" || request.HanhDong=="XUAT_HUY" ? request.DoiTacId : null,
-                    KhoXuatId = request.HanhDong == "XUAT_DIEU_CHUYEN_NOI_BO" || request.HanhDong == "XUAT_HUY" ? request.KhoXuatId : null,
+                    CuaHangId = (int)request.KhoNhapId,
+                    DoiTacId = request.DoiTacId,
                     NgayThucHien = DateTime.Now,
-                    TrangThai = "CHO_XAC_NHAN"
+                    TrangThai = "CHO_XAC_NHAN" 
                 };
                 _context.BienLai.Add(bienlai);
                 await _context.SaveChangesAsync();
 
                 foreach (var item in request.Items)
                 {
-                    var nguyenlieu = await _context.NguyenLieu
-                            .FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim() && nl.DoiTacId == request.DoiTacId);
+                    var nguyenlieu = await _context.NguyenLieu.FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim());
                     if (nguyenlieu == null)
                     {
                         nguyenlieu = new NguyenLieu
@@ -152,7 +67,6 @@ namespace backend.Controllers.Admin
                             DonVi = item.DonVi,
                             GiaNhap = item.GiaNhap,
                             TheLoaiId = item.TheLoaiId,
-                            DoiTacId = request.DoiTacId,
                             NgaySanXuat = item.NgaySanXuat,
                             HanSuDung = item.HanSuDung,
                             IsActive = true
@@ -161,44 +75,102 @@ namespace backend.Controllers.Admin
                         await _context.SaveChangesAsync();
                     }
 
-                    var chiTiet = new ChiTietBienLai
-                    {
-                        BienLaiId = bienlai.Id,
-                        NguyenLieuId = nguyenlieu.NguyenLieuId,
-                        Soluong = item.SoLuong,
-                        GhiChu = item.GhiChu
-                    };
-                    _context.ChiTietBienLai.Add(chiTiet);
-
-
-                    var KhoNhan = await _context.tonKhos
-                        .FirstOrDefaultAsync(tk => tk.ShopId == request.KhoNhapId && tk.NguyenLieuId == nguyenlieu.NguyenLieuId);
-                    if (KhoNhan == null)
-                    {
-                        KhoNhan = new TonKho
-                        {
-                            ShopId = (int) request.KhoNhapId,
-                            NguyenLieuId = nguyenlieu.NguyenLieuId,
-                            SoLuong = item.SoLuong
-                        };
-                        _context.tonKhos.Add(KhoNhan);
-
-                    }
-                    else
-                    {
-                        KhoNhan.SoLuong -= item.SoLuong;
-                    }
-
+                    _context.ChiTietBienLai.Add(new ChiTietBienLai { BienLaiId = bienlai.Id, NguyenLieuId = nguyenlieu.NguyenLieuId, Soluong = item.SoLuong, GhiChu = item.GhiChu });
                 }
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return Ok("Xuất kho thanh công lô hàng");
+                return Ok("Đã tạo Phiếu Nhập chờ xác nhận");
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return BadRequest("Lỗi Xuất Kho :" + ex.Message);
-            }          
+                await transaction.RollbackAsync(); return BadRequest("Lỗi: " + ex.Message);
+            }
+        }
+
+        [HttpPost("xuat_kho")]
+        public async Task<IActionResult> XuatKhoList([FromBody] NhapKhoDTO request)
+        {
+            using var transaction = _context.Database.BeginTransaction();
+            try
+            {
+                // điều chuyển nội bộ
+                if (request.HanhDong == "XUAT_DIEU_CHUYEN_NOI_BO")
+                {
+                    // Tạo Phiếu Xuất (Trừ kho ngay)
+                    var bienLaiXuat = new BienLai
+                    {
+                        HanhDong = "XUAT_DIEU_CHUYEN_NOI_BO",
+                        CuaHangId = (int)request.KhoXuatId, 
+                        KhoXuatId = request.KhoNhapId,      
+                        NgayThucHien = DateTime.Now,
+                        TrangThai = "HOAN_THANH"
+                    };
+                    _context.BienLai.Add(bienLaiXuat);
+
+                    var bienLaiNhap = new BienLai
+                    {
+                        HanhDong = "NHAP_DIEU_CHUYEN_NOI_BO",
+                        CuaHangId = (int)request.KhoNhapId,
+                        KhoXuatId = request.KhoXuatId,   
+                        NgayThucHien = DateTime.Now,
+                        TrangThai = "CHO_XAC_NHAN"
+                    };
+                    _context.BienLai.Add(bienLaiNhap);
+                    await _context.SaveChangesAsync();
+
+                    foreach (var item in request.Items)
+                    {
+                        var nguyenlieu = await _context.NguyenLieu.FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim());
+                        if (nguyenlieu != null)
+                        {
+                            _context.ChiTietBienLai.Add(new ChiTietBienLai { BienLaiId = bienLaiXuat.Id, NguyenLieuId = nguyenlieu.NguyenLieuId, Soluong = item.SoLuong, GhiChu = item.GhiChu });
+                            _context.ChiTietBienLai.Add(new ChiTietBienLai { BienLaiId = bienLaiNhap.Id, NguyenLieuId = nguyenlieu.NguyenLieuId, Soluong = item.SoLuong, GhiChu = item.GhiChu });
+
+                            
+                            var khoXuat = await _context.tonKhos.FirstOrDefaultAsync(tk => tk.ShopId == request.KhoXuatId && tk.NguyenLieuId == nguyenlieu.NguyenLieuId);
+                            if (khoXuat != null) { khoXuat.SoLuong -= item.SoLuong; if (khoXuat.SoLuong < 0) khoXuat.SoLuong = 0; }
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return Ok("Đã xuất điều chuyển, trừ kho nguồn và tạo lệnh nhập chờ xác nhận tại kho đích.");
+                }
+                else
+                {
+                    //xuất hủy hoặc trả ncc
+                    bool isXuatHuy = request.HanhDong == "XUAT_HUY";
+                    var bienlai = new BienLai
+                    {
+                        HanhDong = request.HanhDong,
+                        CuaHangId = (int)request.KhoXuatId,
+                        DoiTacId = request.DoiTacId,
+                        NgayThucHien = DateTime.Now,
+                        TrangThai = isXuatHuy ? "HOAN_THANH" : "CHO_XAC_NHAN" 
+                    };
+                    _context.BienLai.Add(bienlai);
+                    await _context.SaveChangesAsync();
+
+                    foreach (var item in request.Items)
+                    {
+                        var nguyenlieu = await _context.NguyenLieu.FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim());
+                        if (nguyenlieu != null)
+                        {
+                            _context.ChiTietBienLai.Add(new ChiTietBienLai { BienLaiId = bienlai.Id, NguyenLieuId = nguyenlieu.NguyenLieuId, Soluong = item.SoLuong, GhiChu = item.GhiChu });
+
+                            if (isXuatHuy)
+                            {
+                                var khoXuat = await _context.tonKhos.FirstOrDefaultAsync(tk => tk.ShopId == request.KhoXuatId && tk.NguyenLieuId == nguyenlieu.NguyenLieuId);
+                                if (khoXuat != null) { khoXuat.SoLuong -= item.SoLuong; if (khoXuat.SoLuong < 0) khoXuat.SoLuong = 0; }
+                            }
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return Ok(isXuatHuy ? "Đã xuất hủy và trừ kho" : "Đã tạo phiếu chờ duyệt");
+                }
+            }
+            catch (Exception ex) { await transaction.RollbackAsync(); return BadRequest("Lỗi: " + ex.Message); }
         }
 
         [HttpPost("kiem_ke")]
@@ -215,23 +187,23 @@ namespace backend.Controllers.Admin
                 _context.KiemKe.Add(phieu);
                 await _context.SaveChangesAsync();
 
-                var tonkho= await _context.tonKhos
-                    .Where(tk=>tk.ShopId==request.ShopId)
+                var tonkho = await _context.tonKhos
+                    .Where(tk => tk.ShopId == request.ShopId)
                     .ToListAsync();
 
-                var listChiTiet=new List<ChiTietKiemKe>();
+                var listChiTiet = new List<ChiTietKiemKe>();
 
-                foreach( var item in request.ChiTiet)
+                foreach (var item in request.ChiTiet)
                 {
-                    var tonkhoDb= tonkho.FirstOrDefault(tk=>tk.NguyenLieuId==item.NguyenLieuId);
+                    var tonkhoDb = tonkho.FirstOrDefault(tk => tk.NguyenLieuId == item.NguyenLieuId);
 
-                    float tonHeThong = tonkhoDb != null ? tonkhoDb.SoLuong : 0; // Nếu không tìm thấy nghĩa là tồn = 0
+                    float tonHeThong = tonkhoDb != null ? tonkhoDb.SoLuong : 0;
                     float chenhLech = item.TonThucTe - tonHeThong;
 
                     var chiTiet = new ChiTietKiemKe
                     {
                         KiemKeId = phieu.KiemKeId,
-                        NguyenLieuId = item.NguyenLieuId, 
+                        NguyenLieuId = item.NguyenLieuId,
                         TonHeThong = tonHeThong,
                         TonThucTe = item.TonThucTe,
                         ChenhLech = chenhLech,
@@ -246,7 +218,6 @@ namespace backend.Controllers.Admin
                     }
                     else
                     {
-                        // Nếu thấy hàng lạ chưa từng nhập -> Tạo mới tồn kho
                         var newTonKho = new TonKho
                         {
                             ShopId = request.ShopId,
@@ -260,13 +231,13 @@ namespace backend.Controllers.Admin
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
-                return Ok("Kiểm kê thành công ");
+                return Ok("Kiểm kê thành công");
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 await transaction.RollbackAsync();
-                return BadRequest("Lỗi kiểm kê "+ex.Message);
+                return BadRequest("Lỗi kiểm kê " + ex.Message);
             }
-            
         }
     }
 }

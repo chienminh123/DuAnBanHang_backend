@@ -41,6 +41,7 @@ builder.Services.AddControllers().AddJsonOptions(x =>
     // Dòng này giúp JSON trả về được format đẹp, dễ đọc hơn
     x.JsonSerializerOptions.WriteIndented = true; 
 });
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -58,5 +59,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<backend.Hubs.OrderHub>("/orderHub");
 
 app.Run();

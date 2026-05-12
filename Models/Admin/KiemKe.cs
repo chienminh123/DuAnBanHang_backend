@@ -10,7 +10,7 @@ namespace backend.Models.Admin
         [Required]
         public int ShopId { get; set; }
         [Required]
-        public DateTime NgayThucHien { get; set; }
+        public DateTime NgayThucHien { get; set; } 
         [ForeignKey("ShopId")]
         public CuaHang? CuaHang { get; set; }
     }

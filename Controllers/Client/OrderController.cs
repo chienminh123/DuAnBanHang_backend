@@ -1,10 +1,14 @@
 ﻿using backend.Data;
+using backend.DTOs.Client;
+using backend.Helpers;
+using backend.Hubs;
+using backend.Migrations;
+using backend.Models.Admin;
 using backend.Models.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using backend.Helpers;
-using backend.DTOs.Client;
 
 
 namespace backend.Controllers.Client
@@ -15,10 +19,12 @@ namespace backend.Controllers.Client
     public class OrderController : ControllerBase
     {
         private readonly ShopContext _context;
+        private readonly IHubContext<OrderHub> _hubContext;
 
-        public OrderController(ShopContext context)
+        public OrderController(ShopContext context,IHubContext<OrderHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet("my-orders")]
@@ -187,7 +193,7 @@ namespace backend.Controllers.Client
                 _context.CartDetailTopping.RemoveRange(cart.CartDetails.SelectMany(cd => cd.Toppings));
                 _context.CartDetail.RemoveRange(cart.CartDetails);
                 await _context.SaveChangesAsync();
-
+                await _hubContext.Clients.All.SendAsync("NewWebOrderAlert", newOrder.ShopId,newOrder.Id);
                 await transaction.CommitAsync();
 
                 if (request.PhuongThucThanhToan == "VNPAY")
@@ -228,6 +234,22 @@ namespace backend.Controllers.Client
                 await transaction.RollbackAsync();
                 return StatusCode(500, "Lỗi hệ thống khi đặt hàng: " + ex.Message);
             }
+        }
+
+        [HttpPut("update-status/{orderId}")]
+        public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromQuery] string status)
+        {
+            var order = await _context.Order.FindAsync(orderId);
+            if (order == null) return NotFound("Không tìm thấy đơn hàng.");
+
+            order.TrangThaiDonHang = status;
+            await _context.SaveChangesAsync();
+
+            if (status == "HOAN_THANH" || status == "PAID")
+            {
+                await XuLySauKhiBanXong(order.Id, order.ShopId);
+            }
+            return Ok(new { message = "Cập nhật trạng thái thành công!" });
         }
 
         [HttpGet("nearest")]
@@ -284,6 +306,75 @@ namespace backend.Controllers.Client
                 }
             }
             return BadRequest("Thanh toán thất bại hoặc đơn hàng không tồn tại.");
+        }
+
+        private async Task XuLySauKhiBanXong(int orderId, int shopId)
+        {
+            var order = await _context.Order
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.OrderDetailToppings)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) return;
+
+            // tích điểm 10k=1d
+            if (order.KhachHangId != null && order.KhachHangId > 0)
+            {
+                var khach = await _context.taiKhoanKhachHang.FindAsync(order.KhachHangId);
+                if (khach != null)
+                {
+                    int diemCong = (int)(order.ThanhTien / 10000); // 10k = 1 điểm
+                    khach.TichDiem += diemCong;
+                }
+            }
+
+            // tru kho
+            var khoShop = await _context.tonKhos.Where(k => k.ShopId == shopId).ToListAsync();
+
+            foreach (var item in order.OrderDetails)
+            {
+                var spChinh = _context.sanPhams.FirstOrDefault(s => s.SanPhamId == item.SanPhamId);
+                if (spChinh != null && spChinh.NguyenLieuId != null)
+                { 
+                    var khoMonChinh = khoShop.FirstOrDefault(k => k.NguyenLieuId == spChinh.NguyenLieuId);
+
+                    if (khoMonChinh != null)
+                    { 
+                        float dinhMucGam = 60;
+                        string sizeStr = spChinh.Size?.Trim().ToUpper();
+
+                        if (sizeStr == "S") dinhMucGam = 40;
+                        else if (sizeStr == "M") dinhMucGam = 60;
+                        else if (sizeStr == "L") dinhMucGam = 80;
+
+                        if (item.IsKhongNau)
+                        {
+                            dinhMucGam += 20;
+                        }
+
+                        float tongTruGam = dinhMucGam * item.SoLuong;
+
+                        khoMonChinh.SoLuong -= (float)(tongTruGam / 1000.0);
+                    }
+                }
+                // rau
+                if (item.RauCuNguyenLieuId != null && item.RauCuNguyenLieuId > 0)
+                {
+                    var khoRau = khoShop.FirstOrDefault(k => k.NguyenLieuId == item.RauCuNguyenLieuId);
+                    if (khoRau != null) khoRau.SoLuong -= item.SoLuong;
+                }
+
+                // topping
+                if (item.OrderDetailToppings != null)
+                {
+                    foreach (var top in item.OrderDetailToppings)
+                    {
+                        var khoTop = khoShop.FirstOrDefault(k => k.NguyenLieuId == top.ToppingSanPhamId);
+                        if (khoTop != null) khoTop.SoLuong -= top.SoLuong;
+                    }
+                }
+            }
+            await _context.SaveChangesAsync();
         }
     }
 }
