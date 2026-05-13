@@ -1,4 +1,5 @@
 ﻿using backend.Data;
+using backend.Models.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -71,6 +72,7 @@ namespace backend.Controllers.Ipos
                     PhuongThucThanhToan = request.PhuongThucThanhToan,
                     TongTienHang = request.TongTien,
                     ThanhTien = request.TongTien,
+                    KhachHangId = request.KhachHangId,
                     SdtNguoiNhan = request.SdtKhachHang,
                     GhiChu = request.GhiChu
                 };
@@ -81,7 +83,7 @@ namespace backend.Controllers.Ipos
                 //  Duyệt qua từng món ăn Android gửi lên
                 foreach (var item in request.Items)
                 {
-                    var orderDetail = new backend.Models.Client.OrderDetail
+                    var orderDetail = new OrderDetail
                     {
                         OrderId = newOrder.Id,
                         SanPhamId = item.SanPhamId,
@@ -114,6 +116,7 @@ namespace backend.Controllers.Ipos
                 }
 
                 await transaction.CommitAsync();
+                await XuLySauKhiBanXong(newOrder.Id, request.ShopId);
                 return Ok(new { message = "Thanh toán thành công!", orderId = newOrder.Id });
             }
             catch (Exception ex)
@@ -188,7 +191,10 @@ namespace backend.Controllers.Ipos
 
             // tru kho
             var khoShop = await _context.tonKhos.Where(k => k.ShopId == shopId).ToListAsync();
-
+            if (!khoShop.Any())
+            {
+                Console.WriteLine($"[CẢNH BÁO TỒN KHO] Cửa hàng ShopId = {shopId} chưa được nhập bất kỳ hàng hóa nào!");
+            }
             foreach (var item in order.OrderDetails)
             {
 
@@ -214,6 +220,10 @@ namespace backend.Controllers.Ipos
                         float tongTruGam = dinhMucGam * item.SoLuong;
 
                         khoMonChinh.SoLuong -= (float)(tongTruGam / 1000.0);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[CẢNH BÁO TỒN KHO] Không tìm thấy nguyên liệu (NguyenLieuId = {spChinh.NguyenLieuId}) của món cháo trong kho Shop {shopId}!");
                     }
                 }
                 // rau

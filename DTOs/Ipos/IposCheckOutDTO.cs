@@ -7,6 +7,7 @@
         public double TongTien { get; set; }
         public string? SdtKhachHang { get; set; }
         public string? GhiChu { get; set; }
+        public int? KhachHangId { get; set; }
 
         // Danh sách món ăn gửi từ App lên
         public List<IposOrderItemDTO> Items { get; set; } = new List<IposOrderItemDTO>();

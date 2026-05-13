@@ -1,8 +1,10 @@
 ﻿using backend.Data;
 using backend.DTOs;
+using backend.DTOs.Ipos;
 using backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers.Ipos
 {
@@ -10,45 +12,70 @@ namespace backend.Controllers.Ipos
     [ApiController]
     public class AuthController : ControllerBase
     {
-        
-        //public AuthController(ShopContext context , TokenService tokenService)
-        //{private readonly ShopContext _context;
-        //private readonly TokenService _tokenService;
+        private readonly ShopContext _context;
+        private readonly TokenService _tokenService;
+        public AuthController(ShopContext context, TokenService tokenService)
+        {
+            _context = context;
+            _tokenService = tokenService;
+        }
 
-        //    _context = context;
-        //    _tokenService = tokenService;
-        //}
 
-        //[HttpPost("login")]
-        //public async Task<IActionResult> IposLogin([FromBody] LoginDTO request)
-        //{
-        //    var user = await _context.TaiKhoanNoiBo
-        //        .Include(u => u.CuaHang)
-        //        .FirstOrDefaultAsync(u => u.TenTaiKhoan == request.TenTaiKhoan);
+        [HttpGet("check-phone")]
+        public async Task<IActionResult> CheckPhone([FromQuery] string phone)
+        {
+            var khach = await _context.taiKhoanKhachHang
+                .FirstOrDefaultAsync(k => k.Sdt == phone);
 
-        //    if (user == null || !BCrypt.Net.BCrypt.Verify(request.MatKhau, user.MatKhau))
-        //    {
-        //        return BadRequest("Tên tài khoản hoặc mật khẩu không đúng!");
-        //    }
+            if (khach == null)
+                return NotFound();
 
-        //    if (!user.IsActive)
-        //    {
-        //        return BadRequest("Tài khoản này đã bị khóa!");
-        //    }
+            return Ok(new
+            {
+                id = khach.KhachHangId,
+                tenKhachHang = khach.TenKhachHang ?? "Khách hàng"
+            });
+        }
 
-        //    // 4. TẠO TOKEN (Bạn copy nguyên dòng _tokenService.CreateToken(...) từ file cũ sang đây)
-        //    // string tokenString = _tokenService.CreateToken(...);
+        [HttpPost("create-fast-customer")]
+        public async Task<IActionResult> CreateFastCustomer([FromBody] CreateFastCustomerDTO dto)
+        {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(dto.Phone, @"^(0)(3|5|7|8|9)[0-9]{8}$"))
+            {
+                return BadRequest("Số điện thoại không đúng định dạng!");
+            }
 
-        //    // 5. TRẢ VỀ JSON ĐÃ "ĐÓNG GÓI" DÀNH RIÊNG CHO ANDROID
-        //    return Ok(new
-        //    {
-        //        message = "Đăng nhập thành công",
-        //        // token = tokenString, 
-        //        tenNhanVien = user.TenNhanVien,
-        //        // Nếu CuaHangId null (nhân viên tổng bộ), gán mặc định là "Cửa hàng chính"
-        //        tenCuaHang = user.CuaHang != null ? user.CuaHang.TenCuaHang : "Cửa hàng chính"
-        //    });
-        //}
+            if (await _context.taiKhoanKhachHang.AnyAsync(k => k.Sdt == dto.Phone))
+            {
+                return BadRequest("Số điện thoại này đã được đăng ký!");
+            }
+
+            string defaultPasswordHash = BCrypt.Net.BCrypt.HashPassword("123456");
+
+            var newKhach = new backend.Models.Client.TaiKhoanKhachHang
+            {
+                TenKhachHang = dto.Name,
+                Sdt = dto.Phone,
+                Email = dto.Phone + "@khachhang.com",
+                MatKhau = defaultPasswordHash,
+                ChucVuId = 7, 
+                NgayThamGia = DateTime.Now,
+                NgaySinh = DateTime.Now, 
+                TichDiem = 0
+            };
+
+            _context.taiKhoanKhachHang.Add(newKhach);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                id = newKhach.KhachHangId,
+                tenKhachHang = newKhach.TenKhachHang
+            });
+        }
+
+
     }
 }
+
 

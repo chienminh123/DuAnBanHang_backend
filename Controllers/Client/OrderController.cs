@@ -201,8 +201,8 @@ namespace backend.Controllers.Client
                     string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                     string vnp_Returnurl = "http://localhost:5173/vnpay-return"; 
 
-                    string vnp_TmnCode = "ALLNTWOD";
-                    string vnp_HashSecret = "FQRYTS369YX6XL3SVXMOC1CD4AM6JKP4";
+                    string vnp_TmnCode = "I53LTI16";
+                    string vnp_HashSecret = "7RK2E3FQ8YHTT09P0HC8ADMR3RMJ6D06";
 
                     var vnpay = new backend.Helpers.VnPayLibrary();
 
@@ -288,24 +288,35 @@ namespace backend.Controllers.Client
         [HttpGet("vnpay-return-update")]
         public async Task<IActionResult> UpdateVnPayStatus([FromQuery] string vnp_TxnRef, [FromQuery] string vnp_ResponseCode)
         {
-            if (vnp_ResponseCode == "00" && !string.IsNullOrEmpty(vnp_TxnRef))
-            {
-                var orderIdStr = vnp_TxnRef.Split('_')[0];
+            if (string.IsNullOrEmpty(vnp_TxnRef)) return BadRequest("Thiếu mã giao dịch.");
 
-                if (int.TryParse(orderIdStr, out int orderId))
+            var orderIdStr = vnp_TxnRef.Split('_')[0];
+
+            if (int.TryParse(orderIdStr, out int orderId))
+            {
+                var order = await _context.Order.FindAsync(orderId);
+
+                if (order != null && order.TrangThaiDonHang == "CHO_THANH_TOAN")
                 {
-                    var order = await _context.Order.FindAsync(orderId);
-                    if (order != null && order.TrangThaiDonHang == "CHO_THANH_TOAN")
+                    if (vnp_ResponseCode == "00")
                     {
                         order.TrangThaiDonHang = "CHO_XAC_NHAN";
-                        order.IsThanhToan = true;                
+                        order.IsThanhToan = true;
 
                         await _context.SaveChangesAsync();
                         return Ok(new { message = "Cập nhật thành công!" });
                     }
+                    else
+                    {
+                        order.TrangThaiDonHang = "DA_HUY"; 
+                        order.GhiChu = order.GhiChu + " (Khách hủy thanh toán VNPAY)"; 
+
+                        await _context.SaveChangesAsync();
+                        return BadRequest("Thanh toán thất bại hoặc khách đã hủy giao dịch.");
+                    }
                 }
             }
-            return BadRequest("Thanh toán thất bại hoặc đơn hàng không tồn tại.");
+            return BadRequest("Đơn hàng không tồn tại hoặc sai trạng thái.");
         }
 
         private async Task XuLySauKhiBanXong(int orderId, int shopId)
