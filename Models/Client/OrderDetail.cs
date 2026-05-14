@@ -36,6 +36,9 @@ namespace backend.Models.Client
         [ForeignKey("RauCuNguyenLieuId")]
         public NguyenLieu? RauCu { get; set; }
 
+        [ForeignKey("SanPhamId")]
+        public SanPham? SanPham { get; set; }
+
         public ICollection<OrderDetailTopping> OrderDetailToppings { get; set; } = new List<OrderDetailTopping>();  
     }
 }

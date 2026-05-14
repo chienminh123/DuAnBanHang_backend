@@ -13,7 +13,7 @@ namespace backend.Controllers.Client
     public class DeliveryController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ShopContext _context; // Bổ sung DB Context
+        private readonly ShopContext _context; 
 
         private const string LALAMOVE_API_KEY = "pk_test_5a6ed8f1c57069a904ae968a024217ae";
         private const string LALAMOVE_API_SECRET = "sk_test_PoMyGMoB23qnMdrEuNt6VzzLzaiAC62kxfAeKOzsqQqDCcZCbMOzjGhZ8hAl8Ssc";

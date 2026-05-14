@@ -1,4 +1,5 @@
 ﻿using backend.Data;
+using backend.Models.Admin;
 using backend.Models.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -135,6 +136,7 @@ namespace backend.Controllers.Ipos
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.OrderDetailToppings)
                         .ThenInclude(odt => odt.SanPhamTopping)
+                .Include(o=>o.KhachHang)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null) return NotFound("Không tìm thấy đơn hàng.");
@@ -145,8 +147,13 @@ namespace backend.Controllers.Ipos
             var result = new
             {
                 order.MaDonHang,
-                order.NgayTao,
-                order.TongTienHang,
+                NgayTao = order.NgayTao.ToString("HH:mm - dd/MM/yyyy"),
+                order.PhuongThucThanhToan, 
+                order.TongTienHang,       
+                order.TienGiamGia,       
+                order.ThanhTien,         
+                TenKhachTichDiem = order.KhachHang?.TenKhachHang ?? "xxxxx", 
+                SdtKhachTichDiem = order.SdtNguoiNhan,
                 Items = order.OrderDetails.Select(od => {
                     var spChinh = sanPhams.FirstOrDefault(s => s.SanPhamId == od.SanPhamId);
                     return new
@@ -189,6 +196,18 @@ namespace backend.Controllers.Ipos
                 }
             }
 
+            var phieuXuatBan = new BienLai
+            {
+                HanhDong = "XUAT_BAN",
+                CuaHangId = shopId,
+                NgayThucHien = DateTime.Now,
+                TrangThai = "HOAN_THANH"
+            };
+            _context.BienLai.Add(phieuXuatBan);
+            await _context.SaveChangesAsync(); 
+
+            var listChiTietXuat = new List<ChiTietBienLai>();
+
             // tru kho
             var khoShop = await _context.tonKhos.Where(k => k.ShopId == shopId).ToListAsync();
             if (!khoShop.Any())
@@ -216,10 +235,18 @@ namespace backend.Controllers.Ipos
                         {
                             dinhMucGam += 20;
                         }
-
                         float tongTruGam = dinhMucGam * item.SoLuong;
+                        float luongTruKg = (float)(tongTruGam / 1000.0);
 
-                        khoMonChinh.SoLuong -= (float)(tongTruGam / 1000.0);
+                        khoMonChinh.SoLuong -= luongTruKg;
+
+                        listChiTietXuat.Add(new ChiTietBienLai
+                        {
+                            BienLaiId = phieuXuatBan.Id,
+                            NguyenLieuId = spChinh.NguyenLieuId,
+                            Soluong = luongTruKg,
+                            GhiChu = "Xuất bán đơn " + order.MaDonHang
+                        });
                     }
                     else
                     {
@@ -230,7 +257,17 @@ namespace backend.Controllers.Ipos
                 if (item.RauCuNguyenLieuId != null && item.RauCuNguyenLieuId > 0)
                 {
                     var khoRau = khoShop.FirstOrDefault(k => k.NguyenLieuId == item.RauCuNguyenLieuId);
-                    if (khoRau != null) khoRau.SoLuong -= item.SoLuong;
+                    if (khoRau != null)
+                    {
+                        khoRau.SoLuong -= item.SoLuong; 
+                        listChiTietXuat.Add(new ChiTietBienLai
+                        {
+                            BienLaiId = phieuXuatBan.Id,
+                            NguyenLieuId = item.RauCuNguyenLieuId.Value,
+                            Soluong = item.SoLuong,
+                            GhiChu = "Rau củ đơn " + order.MaDonHang
+                        });
+                    }
                 }
 
                 // topping
@@ -239,9 +276,23 @@ namespace backend.Controllers.Ipos
                     foreach (var top in item.OrderDetailToppings)
                     {
                         var khoTop = khoShop.FirstOrDefault(k => k.NguyenLieuId == top.ToppingSanPhamId);
-                        if (khoTop != null) khoTop.SoLuong -= top.SoLuong;
+                        if (khoTop != null)
+                        {
+                            khoTop.SoLuong -= top.SoLuong;
+                            listChiTietXuat.Add(new ChiTietBienLai
+                            {
+                                BienLaiId = phieuXuatBan.Id,
+                                NguyenLieuId = top.ToppingSanPhamId,
+                                Soluong = top.SoLuong,
+                                GhiChu = "Topping đơn " + order.MaDonHang
+                            });
+                        }
                     }
                 }
+            }
+            if (listChiTietXuat.Any())
+            {
+                _context.ChiTietBienLai.AddRange(listChiTietXuat);
             }
             await _context.SaveChangesAsync();
         }

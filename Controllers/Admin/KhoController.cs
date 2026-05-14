@@ -58,7 +58,7 @@ namespace backend.Controllers.Admin
 
                 foreach (var item in request.Items)
                 {
-                    var nguyenlieu = await _context.NguyenLieu.FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim());
+                    var nguyenlieu = await _context.NguyenLieu.FindAsync(item.NguyenLieuId);
                     if (nguyenlieu == null)
                     {
                         nguyenlieu = new NguyenLieu
@@ -121,7 +121,7 @@ namespace backend.Controllers.Admin
 
                     foreach (var item in request.Items)
                     {
-                        var nguyenlieu = await _context.NguyenLieu.FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim());
+                        var nguyenlieu = await _context.NguyenLieu.FindAsync(item.NguyenLieuId);
                         if (nguyenlieu != null)
                         {
                             _context.ChiTietBienLai.Add(new ChiTietBienLai { BienLaiId = bienLaiXuat.Id, NguyenLieuId = nguyenlieu.NguyenLieuId, Soluong = item.SoLuong, GhiChu = item.GhiChu });

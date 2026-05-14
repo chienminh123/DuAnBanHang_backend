@@ -36,6 +36,7 @@ namespace backend.Data
         public DbSet<OrderDetailTopping> OrderDetailTopping { get; set; }
         public DbSet<CartDetailTopping> CartDetailTopping { get; set; }
         public DbSet<MenuCuaHang> MenuCuaHang { get; set; }
+        public DbSet<ChotCa> ChotCa { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 

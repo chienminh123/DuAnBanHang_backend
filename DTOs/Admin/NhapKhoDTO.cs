@@ -15,6 +15,7 @@
 
     public class NguyenLieuNhapItem
         {
+            public int NguyenLieuId { get; set; }
             public string NguyenLieuName { get; set; }
             public string DonVi { get; set; } // kg, hop...
             public int TheLoaiId { get; set; }
