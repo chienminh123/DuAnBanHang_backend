@@ -19,18 +19,20 @@ namespace backend.Controllers.Ipos
         }
 
         [HttpGet("check-ca/{shopId}")]
-        public async Task<IActionResult> CheckCa([FromBody]MoCaDTO dto)
+        public async Task<IActionResult> CheckCa(int shopId)
         {
             var caDangMo = await _context.ChotCa
-                                    .FirstOrDefaultAsync(cc => cc.ShopId == dto.ShopId && cc.TrangThai == "DANG_MO");
-            if (caDangMo==null)
+                .FirstOrDefaultAsync(cc => cc.ShopId == shopId && cc.TrangThai == "DANG_MO");
+
+            if (caDangMo == null)
             {
                 return Ok(new { isDaMo = false });
             }
-            return Ok(new { isDaMo = true, ca = caDangMo });
+
+            return Ok(new { isDaMo = true, caId = caDangMo.Id });
         }
 
-        [HttpGet("mo-ca")]
+        [HttpPost("mo-ca")]
         public async Task<IActionResult> MoCa([FromBody]MoCaDTO dto)
         {
             bool dangCoCaMo = await _context.ChotCa.AnyAsync(c => c.ShopId == dto.ShopId && c.TrangThai == "DANG_MO");
@@ -85,6 +87,15 @@ namespace backend.Controllers.Ipos
             });
         }
 
-       
+        [HttpGet("check-active-ca/{shopId}")]
+        public async Task<IActionResult> GetActiveCa(int shopId)
+        {
+            var activeCa = await _context.ChotCa
+                .FirstOrDefaultAsync(c => c.ShopId == shopId && c.TrangThai == "DANG_MO");
+
+            if (activeCa == null) return NotFound();
+
+            return Ok(new { id = activeCa.Id }); 
+        }
     }
 }

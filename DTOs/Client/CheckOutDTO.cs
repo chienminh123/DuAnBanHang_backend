@@ -7,6 +7,8 @@
         public string DiaChiGiaoHang { get; set; }
         public string PhuongThucThanhToan { get; set; }
         public string? GhiChuDonHang { get; set; }
+        public double DiemSuDung { get; set; }
+        public double TienGiamGia { get; set; }
         public double TongTienHang { get; set; }
         public double PhiGiaoHang { get; set; }
         public int ShopId { get; set; }

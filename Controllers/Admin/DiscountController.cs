@@ -24,6 +24,24 @@ namespace backend.Controllers.Admin
             return Ok(list);
         }
 
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveDiscount()
+        {
+            var today = DateTime.Now;
+            var activeDiscounts = await _context.MaGiamGia
+                .Where(d => d.IsActive == true
+                        && d.SoLuong > 0
+                        && d.NgayBatDau <= today
+                        && d.NgayKetThuc >= today)
+                .Select(g => new
+                {
+                    g.Code,
+                    g.LoaiMa,
+                    g.MaxValue
+                }).ToListAsync();
+            return Ok(activeDiscounts);
+        }
+
         [HttpDelete]
         public async Task<IActionResult> Delete(int id)
         {
@@ -81,6 +99,7 @@ namespace backend.Controllers.Admin
             {
                 Code = request.Code,
                 LoaiMa = request.LoaiMa,
+                DiscountValue = request.DiscountValue,
                 MaxValue = request.MaxValue ?? 0,
                 SoLuong = request.SoLuong ?? 10,
                 NgayBatDau = request.NgayBatDau ?? DateTime.Now.AddDays(1),
@@ -113,6 +132,37 @@ namespace backend.Controllers.Admin
                 NotFound("k tìm thấy mã nào trong khoảng thời gian này ");
             }
             return Ok(discount);
+        }
+
+        [HttpGet("check")]
+        public async Task<IActionResult> CheckVoucher([FromQuery] string code, [FromQuery] int shopId, [FromQuery] double totalAmount)
+        {
+            var discount = await _context.MaGiamGia.FirstOrDefaultAsync(d => d.Code == code.Trim());
+
+            if (discount == null || !discount.IsActive || discount.SoLuong <= 0)
+                return Ok(new { isValid = false, message = "Mã không khả dụng!" });
+
+            double soTienGiam = 0;
+
+            if (discount.LoaiMa.ToUpper() == "PERCENT")
+            {
+                soTienGiam = totalAmount * (discount.DiscountValue / 100.0);
+
+                if (soTienGiam > discount.MaxValue) soTienGiam = discount.MaxValue;
+            }
+            else if (discount.LoaiMa.ToUpper() == "FIXED")
+            {
+                soTienGiam = discount.DiscountValue;
+            }
+
+            if (soTienGiam > totalAmount) soTienGiam = totalAmount;
+
+            return Ok(new
+            {
+                isValid = true,
+                soTienGiam = soTienGiam,
+                message = "Áp dụng thành công!"
+            });
         }
     }
 }

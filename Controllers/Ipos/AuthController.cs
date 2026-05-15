@@ -33,7 +33,8 @@ namespace backend.Controllers.Ipos
             return Ok(new
             {
                 id = khach.KhachHangId,
-                tenKhachHang = khach.TenKhachHang ?? "Khách hàng"
+                tenKhachHang = khach.TenKhachHang ?? "Khách hàng",
+                tichDiem = khach.TichDiem 
             });
         }
 
@@ -70,7 +71,8 @@ namespace backend.Controllers.Ipos
             return Ok(new
             {
                 id = newKhach.KhachHangId,
-                tenKhachHang = newKhach.TenKhachHang
+                tenKhachHang = newKhach.TenKhachHang,
+                tichDiem = newKhach.TichDiem
             });
         }
 

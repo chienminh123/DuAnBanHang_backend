@@ -17,9 +17,8 @@ namespace backend.Controllers.Client
 
         private const string LALAMOVE_API_KEY = "pk_test_5a6ed8f1c57069a904ae968a024217ae";
         private const string LALAMOVE_API_SECRET = "sk_test_PoMyGMoB23qnMdrEuNt6VzzLzaiAC62kxfAeKOzsqQqDCcZCbMOzjGhZ8hAl8Ssc";
-        private const string BASE_URL = "https://rest.sandbox.lalamove.com";
+        private const string BASE_URL = "https://rest.sandbox.lalamove.com/v3";
 
-        // Tiêm DB Context vào đây
         public DeliveryController(IHttpClientFactory httpClientFactory, ShopContext context)
         {
             _httpClientFactory = httpClientFactory;
@@ -40,7 +39,7 @@ namespace backend.Controllers.Client
 
             try
             {
-                // 1. LẤY THÔNG TIN CỬA HÀNG TỪ DATABASE
+                // LẤY THÔNG TIN CỬA HÀNG TỪ DATABASE
                 var shop = await _context.cuaHangs.FindAsync(shopId);
                 if (shop == null || !shop.Latitude.HasValue || !shop.Longitude.HasValue)
                 {
@@ -61,7 +60,7 @@ namespace backend.Controllers.Client
                 double.TryParse(lng.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedLng);
                 string latClient = parsedLat == 0 ? "21.003117" : parsedLat.ToString("0.######", CultureInfo.InvariantCulture);
                 string lngClient = parsedLng == 0 ? "105.820140" : parsedLng.ToString("0.######", CultureInfo.InvariantCulture);
-                // 2. DÙNG DỮ LIỆU THẬT CHO PAYLOAD
+                //DÙNG DỮ LIỆU THẬT CHO PAYLOAD
                 var payload = new
                 {
                     data = new
@@ -91,7 +90,7 @@ namespace backend.Controllers.Client
                     }
                 };
 
-                // Ép C# không mã hóa tiếng Việt
+                
                 var options = new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
                 string jsonBody = JsonSerializer.Serialize(payload, options);
 
@@ -99,7 +98,7 @@ namespace backend.Controllers.Client
                 string method = "POST";
                 string timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
 
-                // Nhớ 2 dấu \r\n
+                
                 string rawSignature = $"{timestamp}\r\n{method}\r\n{path}\r\n\r\n{jsonBody}";
                 string signature = CreateHmacSignature(LALAMOVE_API_SECRET, rawSignature);
 

@@ -144,10 +144,14 @@ namespace backend.Controllers.Client
                     DiaChiGiaoHang = request.DiaChiGiaoHang,
                     PhuongThucThanhToan = request.PhuongThucThanhToan,
                     GhiChu = request.GhiChuDonHang,
-                    TongTienHang = request.TongTienHang,               
-                    PhiGiaoHang = request.PhiGiaoHang,                
+
+                    TongTienHang = request.TongTienHang,
+                    PhiGiaoHang = request.PhiGiaoHang,
+                    TienGiamGia = request.TienGiamGia, 
+                    DiemSuDung = request.DiemSuDung,
                     ThanhTien = request.TongTienHang + request.PhiGiaoHang
                 };
+                if (newOrder.ThanhTien < 0) newOrder.ThanhTien = 0;
 
                 _context.Order.Add(newOrder);
                 await _context.SaveChangesAsync(); 
@@ -334,23 +338,47 @@ namespace backend.Controllers.Client
                 var khach = await _context.taiKhoanKhachHang.FindAsync(order.KhachHangId);
                 if (khach != null)
                 {
+                    if (order.DiemSuDung > 0)
+                    {
+                        khach.TichDiem -= (int)order.DiemSuDung;
+                        if (khach.TichDiem < 0) khach.TichDiem = 0;
+                    }
                     int diemCong = (int)(order.ThanhTien / 10000); // 10k = 1 điểm
                     khach.TichDiem += diemCong;
+                    order.DiemCongThem = diemCong;
+                    await _context.SaveChangesAsync();
                 }
+            
             }
+
+            var phieuXuatBan = new BienLai
+            {
+                HanhDong = "XUAT_BAN",
+                CuaHangId = shopId,
+                NgayThucHien = DateTime.Now,
+                TrangThai = "HOAN_THANH"
+            };
+            _context.BienLai.Add(phieuXuatBan);
+            await _context.SaveChangesAsync();
+
+            var listChiTietXuat = new List<ChiTietBienLai>();
 
             // tru kho
             var khoShop = await _context.tonKhos.Where(k => k.ShopId == shopId).ToListAsync();
-
+            if (!khoShop.Any())
+            {
+                Console.WriteLine($"[CẢNH BÁO TỒN KHO] Cửa hàng ShopId = {shopId} chưa được nhập bất kỳ hàng hóa nào!");
+            }
             foreach (var item in order.OrderDetails)
             {
+
                 var spChinh = _context.sanPhams.FirstOrDefault(s => s.SanPhamId == item.SanPhamId);
                 if (spChinh != null && spChinh.NguyenLieuId != null)
-                { 
+                {
                     var khoMonChinh = khoShop.FirstOrDefault(k => k.NguyenLieuId == spChinh.NguyenLieuId);
 
                     if (khoMonChinh != null)
-                    { 
+                    {
                         float dinhMucGam = 60;
                         string sizeStr = spChinh.Size?.Trim().ToUpper();
 
@@ -362,17 +390,41 @@ namespace backend.Controllers.Client
                         {
                             dinhMucGam += 20;
                         }
-
                         float tongTruGam = dinhMucGam * item.SoLuong;
+                        float luongTruKg = (float)(tongTruGam / 1000.0);
 
-                        khoMonChinh.SoLuong -= (float)(tongTruGam / 1000.0);
+                        khoMonChinh.SoLuong -= luongTruKg;
+
+                        listChiTietXuat.Add(new ChiTietBienLai
+                        {
+                            BienLaiId = phieuXuatBan.Id,
+                            NguyenLieuId = spChinh.NguyenLieuId,
+                            Soluong = luongTruKg,
+                            GhiChu = "Xuất bán đơn " + order.MaDonHang
+                        });
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[CẢNH BÁO TỒN KHO] Không tìm thấy nguyên liệu (NguyenLieuId = {spChinh.NguyenLieuId}) của món cháo trong kho Shop {shopId}!");
                     }
                 }
                 // rau
                 if (item.RauCuNguyenLieuId != null && item.RauCuNguyenLieuId > 0)
                 {
                     var khoRau = khoShop.FirstOrDefault(k => k.NguyenLieuId == item.RauCuNguyenLieuId);
-                    if (khoRau != null) khoRau.SoLuong -= item.SoLuong;
+                    if (khoRau != null)
+                    {
+                        float tongTruKg = (float)(0.08 * item.SoLuong);
+
+                        khoRau.SoLuong -= tongTruKg;
+                        listChiTietXuat.Add(new ChiTietBienLai
+                        {
+                            BienLaiId = phieuXuatBan.Id,
+                            NguyenLieuId = item.RauCuNguyenLieuId.Value,
+                            Soluong = item.SoLuong,
+                            GhiChu = "Rau củ đơn " + order.MaDonHang
+                        });
+                    }
                 }
 
                 // topping
@@ -381,9 +433,23 @@ namespace backend.Controllers.Client
                     foreach (var top in item.OrderDetailToppings)
                     {
                         var khoTop = khoShop.FirstOrDefault(k => k.NguyenLieuId == top.ToppingSanPhamId);
-                        if (khoTop != null) khoTop.SoLuong -= top.SoLuong;
+                        if (khoTop != null)
+                        {
+                            khoTop.SoLuong -= top.SoLuong;
+                            listChiTietXuat.Add(new ChiTietBienLai
+                            {
+                                BienLaiId = phieuXuatBan.Id,
+                                NguyenLieuId = top.ToppingSanPhamId,
+                                Soluong = top.SoLuong,
+                                GhiChu = "Topping đơn " + order.MaDonHang
+                            });
+                        }
                     }
                 }
+            }
+            if (listChiTietXuat.Any())
+            {
+                _context.ChiTietBienLai.AddRange(listChiTietXuat);
             }
             await _context.SaveChangesAsync();
         }

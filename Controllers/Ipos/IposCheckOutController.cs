@@ -1,4 +1,5 @@
 ﻿using backend.Data;
+using backend.DTOs.Ipos;
 using backend.Models.Admin;
 using backend.Models.Client;
 using Microsoft.AspNetCore.Http;
@@ -57,7 +58,7 @@ namespace backend.Controllers.Ipos
         }
 
         [HttpPost("ipos-checkout")]
-        public async Task<IActionResult> IposCheckout([FromBody] backend.DTOs.Ipos.IposCheckOutDTO request)
+        public async Task<IActionResult> IposCheckout([FromBody] IposCheckOutDTO request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -71,8 +72,12 @@ namespace backend.Controllers.Ipos
                     NgayTao = DateTime.Now,
                     TrangThaiDonHang = "DA_THANH_TOAN",
                     PhuongThucThanhToan = request.PhuongThucThanhToan,
-                    TongTienHang = request.TongTien,
-                    ThanhTien = request.TongTien,
+
+                    TongTienHang = request.TongTienHang,
+                    TienGiamGia = request.TienGiamGia,
+                    DiemSuDung = request.DiemSuDung,
+                    ThanhTien = request.ThanhTien,
+
                     KhachHangId = request.KhachHangId,
                     SdtNguoiNhan = request.SdtKhachHang,
                     GhiChu = request.GhiChu
@@ -191,8 +196,16 @@ namespace backend.Controllers.Ipos
                 var khach = await _context.taiKhoanKhachHang.FindAsync(order.KhachHangId);
                 if (khach != null)
                 {
-                    int diemCong = (int)(order.ThanhTien / 10000); // 10k = 1 điểm
+                    if (order.DiemSuDung > 0)
+                    {
+                        khach.TichDiem -= (int)order.DiemSuDung;
+                        if (khach.TichDiem < 0) khach.TichDiem = 0;
+                    }
+
+                    int diemCong = (int)(order.ThanhTien / 10000);
                     khach.TichDiem += diemCong;
+
+                    order.DiemCongThem = diemCong;
                 }
             }
 
@@ -259,7 +272,9 @@ namespace backend.Controllers.Ipos
                     var khoRau = khoShop.FirstOrDefault(k => k.NguyenLieuId == item.RauCuNguyenLieuId);
                     if (khoRau != null)
                     {
-                        khoRau.SoLuong -= item.SoLuong; 
+                        float tongTruKg = (float)(0.08 * item.SoLuong);
+                        
+                        khoRau.SoLuong -= tongTruKg; 
                         listChiTietXuat.Add(new ChiTietBienLai
                         {
                             BienLaiId = phieuXuatBan.Id,

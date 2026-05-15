@@ -11,6 +11,8 @@ namespace backend.Models.Admin
         [Required]
         public string LoaiMa { get; set; } = "Persent";
         [Required]
+        public int DiscountValue { get; set; }
+        [Required]
         public float MaxValue { get; set; }
         [Required]
         public int SoLuong { get; set; }

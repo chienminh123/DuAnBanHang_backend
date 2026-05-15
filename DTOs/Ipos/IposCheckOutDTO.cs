@@ -4,10 +4,14 @@
     {
         public int ShopId { get; set; }
         public string PhuongThucThanhToan { get; set; } // "TIEN_MAT", "VNPay"
-        public double TongTien { get; set; }
+        public double ThanhTien { get; set; }
+        public double TongTienHang { get; set; }
+        public double TienGiamGia { get; set; }
+        public double DiemSuDung { get; set; }
         public string? SdtKhachHang { get; set; }
         public string? GhiChu { get; set; }
         public int? KhachHangId { get; set; }
+
 
         // Danh sách món ăn gửi từ App lên
         public List<IposOrderItemDTO> Items { get; set; } = new List<IposOrderItemDTO>();

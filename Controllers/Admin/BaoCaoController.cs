@@ -29,7 +29,11 @@ namespace backend.Controllers.Admin
                         && o.NgayTao<=thoiDiemKetThuc
                         && (o.TrangThaiDonHang=="DA_THANH_TOAN"||o.TrangThaiDonHang=="HOAN_THANH"))
                     .GroupBy(o=>o.NgayTao.Date)
-                    .Select(g=> new { Ngay=g.Key,TongTien=g.Sum(x=>x.ThanhTien)})
+                    .Select(g=> new { Ngay=g.Key,
+                                      TongTien=g.Sum(x=>x.ThanhTien),
+                                      TienMat=g.Where(x=>x.PhuongThucThanhToan== "TIEN_MAT").Sum(x=>x.ThanhTien),
+                                      VnPay=g.Where(x=>x.PhuongThucThanhToan=="VNPAY").Sum(x=>x.ThanhTien)
+                    })
                     .OrderBy(o=>o.Ngay)
                 .ToListAsync();
 

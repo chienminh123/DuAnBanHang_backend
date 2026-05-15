@@ -41,6 +41,12 @@ namespace backend.Data
         {
 
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<OrderDetail>()
+                .HasOne(od => od.SanPham)         
+                .WithMany()                      
+                .HasForeignKey(od => od.SanPhamId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<NguyenLieu>()
                     .HasOne(n => n.TheLoai)
                     .WithMany()
