@@ -20,11 +20,13 @@ namespace backend.Controllers.Client
     {
         private readonly ShopContext _context;
         private readonly IHubContext<OrderHub> _hubContext;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public OrderController(ShopContext context,IHubContext<OrderHub> hubContext)
+        public OrderController(ShopContext context,IHubContext<OrderHub> hubContext, IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _hubContext = hubContext;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpGet("my-orders")]
@@ -85,6 +87,7 @@ namespace backend.Controllers.Client
                 order.TongTienHang,
                 order.PhiGiaoHang,
                 order.ThanhTien,
+                LalamoveTrackingUrl = order.LalamoveTrackingUrl,
                 ShopName = order.CuaHang?.ShopName ?? "Cửa hàng trung tâm",
                 Items = order.OrderDetails.Select(od => {
                     var spChinh = sanPhams.FirstOrDefault(s => s.SanPhamId == od.SanPhamId);
@@ -149,7 +152,8 @@ namespace backend.Controllers.Client
                     PhiGiaoHang = request.PhiGiaoHang,
                     TienGiamGia = request.TienGiamGia, 
                     DiemSuDung = request.DiemSuDung,
-                    ThanhTien = request.TongTienHang + request.PhiGiaoHang
+                    ThanhTien = request.TongTienHang + request.PhiGiaoHang,
+                    LalamoveQuotationId = request.LalamoveQuotationId
                 };
                 if (newOrder.ThanhTien < 0) newOrder.ThanhTien = 0;
 
@@ -199,6 +203,19 @@ namespace backend.Controllers.Client
                 await _context.SaveChangesAsync();
                 await _hubContext.Clients.All.SendAsync("NewWebOrderAlert", newOrder.ShopId,newOrder.Id);
                 await transaction.CommitAsync();
+
+                // COD -> ĐẶT XE LALAMOVE LUÔN
+                if (request.PhuongThucThanhToan == "COD" && !string.IsNullOrEmpty(newOrder.LalamoveQuotationId))
+                {
+                    var lalaResult = await CallLalamoveToBookDriver(newOrder.ShopId,newOrder.LalamoveQuotationId, newOrder.TenNguoiNhan, newOrder.SdtNguoiNhan);
+                    if (lalaResult.IsSuccess)
+                    {
+                        newOrder.LalamoveOrderId = lalaResult.OrderId;
+                        newOrder.LalamoveTrackingUrl = lalaResult.ShareLink;
+                        await _context.SaveChangesAsync(); // Cập nhật lại Link tracking vào DB
+                    }
+                }
+
 
                 if (request.PhuongThucThanhToan == "VNPAY")
                 {
@@ -306,6 +323,16 @@ namespace backend.Controllers.Client
                     {
                         order.TrangThaiDonHang = "CHO_XAC_NHAN";
                         order.IsThanhToan = true;
+
+                        if (!string.IsNullOrEmpty(order.LalamoveQuotationId))
+                        {
+                            var lalaResult = await CallLalamoveToBookDriver(order.ShopId,order.LalamoveQuotationId, order.TenNguoiNhan, order.SdtNguoiNhan);
+                            if (lalaResult.IsSuccess)
+                            {
+                                order.LalamoveOrderId = lalaResult.OrderId;
+                                order.LalamoveTrackingUrl = lalaResult.ShareLink;
+                            }
+                        }
 
                         await _context.SaveChangesAsync();
                         return Ok(new { message = "Cập nhật thành công!" });
@@ -430,19 +457,24 @@ namespace backend.Controllers.Client
                 // topping
                 if (item.OrderDetailToppings != null)
                 {
+
                     foreach (var top in item.OrderDetailToppings)
                     {
-                        var khoTop = khoShop.FirstOrDefault(k => k.NguyenLieuId == top.ToppingSanPhamId);
-                        if (khoTop != null)
+                        var spTop = _context.sanPhams.FirstOrDefault(k => k.SanPhamId == top.ToppingSanPhamId);
+                        if (spTop != null && spTop.NguyenLieuId != null)
                         {
-                            khoTop.SoLuong -= top.SoLuong;
-                            listChiTietXuat.Add(new ChiTietBienLai
+                            var khoTop = khoShop.FirstOrDefault(k => k.NguyenLieuId == spTop.NguyenLieuId);
+                            if (khoTop != null)
                             {
-                                BienLaiId = phieuXuatBan.Id,
-                                NguyenLieuId = top.ToppingSanPhamId,
-                                Soluong = top.SoLuong,
-                                GhiChu = "Topping đơn " + order.MaDonHang
-                            });
+                                khoTop.SoLuong -= top.SoLuong;
+                                listChiTietXuat.Add(new ChiTietBienLai
+                                {
+                                    BienLaiId = phieuXuatBan.Id,
+                                    NguyenLieuId = top.ToppingSanPhamId,
+                                    Soluong = top.SoLuong,
+                                    GhiChu = "Topping đơn " + order.MaDonHang
+                                });
+                            }
                         }
                     }
                 }
@@ -453,5 +485,125 @@ namespace backend.Controllers.Client
             }
             await _context.SaveChangesAsync();
         }
+
+        private const string LALAMOVE_API_KEY = "pk_test_5a6ed8f1c57069a904ae968a024217ae";
+        private const string LALAMOVE_API_SECRET = "sk_test_PoMyGMoB23qnMdrEuNt6VzzLzaiAC62kxfAeKOzsqQqDCcZCbMOzjGhZ8hAl8Ssc";
+        private const string BASE_URL = "https://rest.sandbox.lalamove.com";
+
+        private async Task<(bool IsSuccess, string OrderId, string ShareLink)> CallLalamoveToBookDriver(int shopId, string quotationId, string tenKhach, string sdtKhach)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var shop = await _context.cuaHangs.FindAsync(shopId);
+                string sName = shop?.ShopName ?? "Shop Cháo Dinh Dưỡng";
+                string sPhone = shop?.ShopPhone ?? "+84999999999";
+
+                if (sPhone.StartsWith("0")) sPhone = "+84" + sPhone.Substring(1);
+
+
+                string getPath = $"/v3/quotations/{quotationId}";
+                string timestamp1 = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                string rawSignature1 = $"{timestamp1}\r\nGET\r\n{getPath}\r\n\r\n";
+                string signature1 = CreateHmacSignature(LALAMOVE_API_SECRET, rawSignature1);
+
+                var req1 = new HttpRequestMessage(HttpMethod.Get, BASE_URL + getPath);
+                req1.Headers.Add("Authorization", $"hmac {LALAMOVE_API_KEY}:{timestamp1}:{signature1}");
+                req1.Headers.Add("Market", "VN");
+                req1.Headers.Add("Request-ID", Guid.NewGuid().ToString());
+
+                var res1 = await client.SendAsync(req1);
+                var content1 = await res1.Content.ReadAsStringAsync();
+
+                if (!res1.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("LỖI LẤY QUOTATION: " + content1);
+                    return (false, "", "");
+                }
+
+                using var doc1 = System.Text.Json.JsonDocument.Parse(content1);
+                var stops = doc1.RootElement.GetProperty("data").GetProperty("stops");
+                string stopIdShop = stops[0].GetProperty("stopId").GetString();
+                string stopIdKhach = stops[1].GetProperty("stopId").GetString();
+
+                string cPhone = string.IsNullOrEmpty(sdtKhach) ? "+84999999999" : sdtKhach;
+                if (cPhone.StartsWith("0")) cPhone = "+84" + cPhone.Substring(1);
+                string cName = string.IsNullOrEmpty(tenKhach) ? "Khách hàng" : tenKhach;
+
+                var payload = new
+                {
+                    data = new
+                    {
+                        quotationId = quotationId,
+                        sender = new
+                        {
+                            stopId = stopIdShop,
+                            name = sName,       
+                            phone = sPhone      
+                        },
+                        recipients = new[] {
+                            new {
+                                stopId = stopIdKhach,
+                                name = cName,
+                                phone = cPhone,
+                                remarks = "Giao cẩn thận, cháo nóng"
+                            }
+                        },
+                        isPODEnabled = false
+                    }
+                };
+
+                var options = new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+                string jsonBody = System.Text.Json.JsonSerializer.Serialize(payload, options);
+
+                string postPath = "/v3/orders";
+                string timestamp2 = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                string rawSignature2 = $"{timestamp2}\r\nPOST\r\n{postPath}\r\n\r\n{jsonBody}";
+                string signature2 = CreateHmacSignature(LALAMOVE_API_SECRET, rawSignature2);
+
+                var req2 = new HttpRequestMessage(HttpMethod.Post, BASE_URL + postPath)
+                {
+                    Content = new StringContent(jsonBody, System.Text.Encoding.UTF8, "application/json")
+                };
+                req2.Headers.Add("Authorization", $"hmac {LALAMOVE_API_KEY}:{timestamp2}:{signature2}");
+                req2.Headers.Add("Market", "VN");
+                req2.Headers.Add("Request-ID", Guid.NewGuid().ToString());
+
+                var res2 = await client.SendAsync(req2);
+                var content2 = await res2.Content.ReadAsStringAsync();
+
+                if (res2.IsSuccessStatusCode)
+                {
+                    using var doc2 = System.Text.Json.JsonDocument.Parse(content2);
+                    var dataObj = doc2.RootElement.GetProperty("data");
+                    string orderId = dataObj.GetProperty("orderId").GetString();
+                    string shareLink = dataObj.GetProperty("shareLink").GetString();
+                    return (true, orderId, shareLink);
+                }
+
+                Console.WriteLine("LỖI CHỐT XE LALAMOVE: " + content2);
+                return (false, "", "");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("NGOẠI LỆ LALAMOVE: " + ex.Message);
+                return (false, "", "");
+            }
+        }
+
+        private string CreateHmacSignature(string secret, string message)
+        {
+            var encoding = new System.Text.UTF8Encoding();
+            byte[] keyByte = encoding.GetBytes(secret);
+            byte[] messageBytes = encoding.GetBytes(message);
+            using (var hmacsha256 = new System.Security.Cryptography.HMACSHA256(keyByte))
+            {
+                byte[] hashMessage = hmacsha256.ComputeHash(messageBytes);
+                return BitConverter.ToString(hashMessage).Replace("-", "").ToLower();
+            }
+        }
+
+
     }
 }

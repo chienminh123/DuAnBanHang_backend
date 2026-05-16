@@ -32,7 +32,8 @@ namespace backend.Controllers.Admin
                     .Select(g=> new { Ngay=g.Key,
                                       TongTien=g.Sum(x=>x.ThanhTien),
                                       TienMat=g.Where(x=>x.PhuongThucThanhToan== "TIEN_MAT").Sum(x=>x.ThanhTien),
-                                      VnPay=g.Where(x=>x.PhuongThucThanhToan=="VNPAY").Sum(x=>x.ThanhTien)
+                                      VnPay=g.Where(x=>x.PhuongThucThanhToan=="VNPAY").Sum(x=>x.ThanhTien),
+                                      PhiGiaoHang=g.Sum(x=>x.PhiGiaoHang)
                     })
                     .OrderBy(o=>o.Ngay)
                 .ToListAsync();

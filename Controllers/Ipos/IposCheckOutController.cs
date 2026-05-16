@@ -1,4 +1,5 @@
 ﻿using backend.Data;
+using backend.DTOs.Client;
 using backend.DTOs.Ipos;
 using backend.Models.Admin;
 using backend.Models.Client;
@@ -270,6 +271,7 @@ namespace backend.Controllers.Ipos
                 if (item.RauCuNguyenLieuId != null && item.RauCuNguyenLieuId > 0)
                 {
                     var khoRau = khoShop.FirstOrDefault(k => k.NguyenLieuId == item.RauCuNguyenLieuId);
+
                     if (khoRau != null)
                     {
                         float tongTruKg = (float)(0.08 * item.SoLuong);
@@ -290,17 +292,21 @@ namespace backend.Controllers.Ipos
                 {
                     foreach (var top in item.OrderDetailToppings)
                     {
-                        var khoTop = khoShop.FirstOrDefault(k => k.NguyenLieuId == top.ToppingSanPhamId);
-                        if (khoTop != null)
+                        var spTop = _context.sanPhams.FirstOrDefault(k => k.SanPhamId == top.ToppingSanPhamId);
+                        if (spTop != null && spTop.NguyenLieuId != null)
                         {
-                            khoTop.SoLuong -= top.SoLuong;
-                            listChiTietXuat.Add(new ChiTietBienLai
+                            var khoTop = khoShop.FirstOrDefault(k => k.NguyenLieuId == spTop.NguyenLieuId);
+                            if (khoTop != null)
                             {
-                                BienLaiId = phieuXuatBan.Id,
-                                NguyenLieuId = top.ToppingSanPhamId,
-                                Soluong = top.SoLuong,
-                                GhiChu = "Topping đơn " + order.MaDonHang
-                            });
+                                khoTop.SoLuong -= top.SoLuong;
+                                listChiTietXuat.Add(new ChiTietBienLai
+                                {
+                                    BienLaiId = phieuXuatBan.Id,
+                                    NguyenLieuId = top.ToppingSanPhamId,
+                                    Soluong = top.SoLuong,
+                                    GhiChu = "Topping đơn " + order.MaDonHang
+                                });
+                            }
                         }
                     }
                 }

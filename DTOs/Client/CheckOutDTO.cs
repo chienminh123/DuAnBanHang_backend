@@ -12,5 +12,6 @@
         public double TongTienHang { get; set; }
         public double PhiGiaoHang { get; set; }
         public int ShopId { get; set; }
+        public string? LalamoveQuotationId { get; set; }
     }
 }

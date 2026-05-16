@@ -17,7 +17,7 @@ namespace backend.Controllers.Client
 
         private const string LALAMOVE_API_KEY = "pk_test_5a6ed8f1c57069a904ae968a024217ae";
         private const string LALAMOVE_API_SECRET = "sk_test_PoMyGMoB23qnMdrEuNt6VzzLzaiAC62kxfAeKOzsqQqDCcZCbMOzjGhZ8hAl8Ssc";
-        private const string BASE_URL = "https://rest.sandbox.lalamove.com/v3";
+        private const string BASE_URL = "https://rest.sandbox.lalamove.com";
 
         public DeliveryController(IHttpClientFactory httpClientFactory, ShopContext context)
         {
@@ -114,14 +114,16 @@ namespace backend.Controllers.Client
 
                 var response = await client.SendAsync(request);
                 var content = await response.Content.ReadAsStringAsync();
-
                 if (response.IsSuccessStatusCode)
                 {
                     using var doc = JsonDocument.Parse(content);
-                    var totalStr = doc.RootElement.GetProperty("data").GetProperty("priceBreakdown").GetProperty("total").GetString();
+                    var dataObj = doc.RootElement.GetProperty("data");
+                    var totalStr = dataObj.GetProperty("priceBreakdown").GetProperty("total").GetString();
+                    var quotationId = dataObj.GetProperty("quotationId").GetString();
+
                     if (double.TryParse(totalStr, out double totalFee))
                     {
-                        return Ok(new { fee = totalFee });
+                        return Ok(new { fee = totalFee, quotationId = quotationId });
                     }
                 }
 

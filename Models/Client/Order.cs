@@ -61,6 +61,13 @@ namespace backend.Models.Client
         [StringLength(500)]
         public string? GhiChu { get; set; }
 
+        [StringLength(100)]
+        public string? LalamoveQuotationId { get; set; } // Mã báo giá lưu nháp
+        [StringLength(100)]
+        public string? LalamoveOrderId { get; set; } // Mã chuyến xe thật
+        [StringLength(500)]
+        public string? LalamoveTrackingUrl { get; set; } // Link bản đồ theo dõi
+
         [Required]
         public DateTime NgayTao { get; set; } = DateTime.Now;
 

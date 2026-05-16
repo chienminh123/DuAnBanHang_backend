@@ -153,7 +153,8 @@ namespace backend.Controllers.Admin
 
                     foreach (var item in request.Items)
                     {
-                        var nguyenlieu = await _context.NguyenLieu.FirstOrDefaultAsync(nl => nl.NguyenLieuName == item.NguyenLieuName.Trim());
+                        var nguyenlieu = await _context.NguyenLieu
+                            .FirstOrDefaultAsync(nl =>nl.NguyenLieuId == item.NguyenLieuId ||nl.NguyenLieuName == item.NguyenLieuName.Trim());
                         if (nguyenlieu != null)
                         {
                             _context.ChiTietBienLai.Add(new ChiTietBienLai { BienLaiId = bienlai.Id, NguyenLieuId = nguyenlieu.NguyenLieuId, Soluong = item.SoLuong, GhiChu = item.GhiChu });
@@ -237,6 +238,65 @@ namespace backend.Controllers.Admin
             {
                 await transaction.RollbackAsync();
                 return BadRequest("Lỗi kiểm kê " + ex.Message);
+            }
+        }
+
+        [HttpPut("duyet_phieu/{bienLaiId}")]
+        public async Task<IActionResult> DuyetPhieu(int bienLaiId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var bienLai = await _context.BienLai.FindAsync(bienLaiId);
+                if (bienLai == null) return NotFound("Không tìm thấy phiếu");
+                if (bienLai.TrangThai == "HOAN_THANH") return BadRequest("Phiếu này đã được duyệt từ trước rồi!");
+
+                bienLai.TrangThai = "HOAN_THANH";
+                var chiTiets = await _context.ChiTietBienLai.Where(c => c.BienLaiId == bienLaiId).ToListAsync();
+                if (!chiTiets.Any()) return BadRequest("Lỗi: Phiếu không có chi tiết nguyên liệu!");
+
+                bool isNhapKho = bienLai.HanhDong.Contains("NHAP");
+
+                foreach (var item in chiTiets)
+                {
+                    var tonKho = await _context.tonKhos
+                        .FirstOrDefaultAsync(tk => tk.ShopId == bienLai.CuaHangId && tk.NguyenLieuId == item.NguyenLieuId);
+
+                    if (tonKho != null)
+                    {
+                        if (isNhapKho)
+                        {
+                            tonKho.SoLuong += item.Soluong; 
+                        }
+                        else
+                        {
+                            tonKho.SoLuong -= item.Soluong; 
+                            if (tonKho.SoLuong < 0) tonKho.SoLuong = 0;
+                        }
+                    }
+                    else
+                    {
+                        if (isNhapKho)
+                        {
+                            var newTonKho = new TonKho
+                            {
+                                ShopId = bienLai.CuaHangId,
+                                NguyenLieuId = item.NguyenLieuId,
+                                SoLuong = item.Soluong
+                            };
+                            _context.tonKhos.Add(newTonKho);
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return Ok(new { message = "Duyệt phiếu và cập nhật tồn kho thành công!" });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return BadRequest("Lỗi duyệt phiếu: " + ex.Message);
             }
         }
     }
