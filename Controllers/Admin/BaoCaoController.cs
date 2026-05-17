@@ -136,5 +136,108 @@ namespace backend.Controllers.Admin
 
             return Ok(result);
         }
+
+        [HttpGet("Khach-hang-vip")]
+        public async Task<IActionResult> GetKhachHangVip()
+        {
+            var rs = await _context.taiKhoanKhachHang
+                .OrderByDescending(k => k.TichDiem)
+                .Take(10)
+                .Select(g => new
+                {
+                    Name = g.TenKhachHang,
+                    Sdt = g.Sdt,
+                    Diem=g.TichDiem
+                })
+                .ToListAsync();
+            return Ok(rs);
+        }
+
+        [HttpPost("chi-phi-hoat-dong")]
+        public async Task<IActionResult> GetChiPhiHoatDong([FromBody] BaoCaoDTO request)
+        {
+            DateTime thoiDiemKetThuc = request.EndDate.Date.AddDays(1).AddTicks(-1);
+
+            var tongKhuyenMai = await _context.Order
+                .Where(o => request.ShopIds.Contains(o.ShopId)
+                         && o.NgayTao >= request.StartDate.Date
+                         && o.NgayTao <= thoiDiemKetThuc
+                         && (o.TrangThaiDonHang == "DA_THANH_TOAN" || o.TrangThaiDonHang == "HOAN_THANH"))
+                .SumAsync(o => o.TienGiamGia);
+
+            var tongLuong = await _context.BangLuong
+                .Include(b => b.TaiKhoanNoiBo)
+                .Where(b => request.ShopIds.Contains(b.TaiKhoanNoiBo.CuaHangId ?? 0)
+                         && b.Thang == request.EndDate.Month
+                         && b.Nam == request.EndDate.Year)
+                .SumAsync(b => b.TongTienNhan);
+
+            return Ok(new { TongKhuyenMai = tongKhuyenMai, TongLuongThang = tongLuong });
+        }
+
+        [HttpPost("ty-le-chuyen-can")]
+        public async Task<IActionResult> GetTyLeChuyenCan([FromBody] BaoCaoDTO request)
+        {
+            DateTime thoiDiemKetThuc = request.EndDate.Date.AddDays(1).AddTicks(-1);
+
+            var chamCongs = await _context.ChamCong
+                .Include(c => c.CaLamViec)
+                .Where(c => c.GioVao != null
+                         && c.Ngay >= request.StartDate.Date
+                         && c.Ngay <= thoiDiemKetThuc)
+                .ToListAsync();
+
+            int diMuon = chamCongs.Count(c => c.GioVao.Value.TimeOfDay > c.CaLamViec.GioBatDau );
+            int dungGio = chamCongs.Count - diMuon;
+
+            return Ok(new[]
+            {
+                new { Name = "Đúng giờ", Value = dungGio },
+                new { Name = "Đi muộn", Value = diMuon }
+            });
+        }
+
+        [HttpPost("top-nhan-vien")]
+        public async Task<IActionResult> GetTopNhanVien([FromBody] BaoCaoDTO request)
+        {
+            var result = await _context.BangLuong
+                .Include(b => b.TaiKhoanNoiBo)
+                .Where(b => request.ShopIds.Contains(b.TaiKhoanNoiBo.CuaHangId ?? 0)
+                         && b.Thang == request.EndDate.Month
+                         && b.Nam == request.EndDate.Year)
+                .OrderByDescending(b => b.TongGioLam) 
+                .Take(5)
+                .Select(b => new {
+                    Name = b.TaiKhoanNoiBo.TenNhanVien,
+                    GioLam = Math.Round(b.TongGioLam, 1)
+                })
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
+        [HttpPost("hao-hut-kiem-ke")]
+        public async Task<IActionResult> GetHaoHutKiemKe([FromBody] BaoCaoDTO request)
+        {
+            DateTime thoiDiemKetThuc = request.EndDate.Date.AddDays(1).AddTicks(-1);
+
+            var result = await _context.ChiTietKiemKe
+                .Include(c => c.KiemKe)
+                .Include(c => c.NguyenLieu)
+                .Where(c => request.ShopIds.Contains(c.KiemKe.ShopId)
+                         && c.KiemKe.NgayThucHien >= request.StartDate.Date
+                         && c.KiemKe.NgayThucHien <= thoiDiemKetThuc
+                         && c.ChenhLech < 0) 
+                .GroupBy(c => c.NguyenLieu.NguyenLieuName)
+                .Select(g => new {
+                    Name = g.Key,
+                    HaoHut = Math.Abs(g.Sum(x => (double)x.ChenhLech)) 
+                })
+                .OrderByDescending(x => x.HaoHut)
+                .Take(10)
+                .ToListAsync();
+
+            return Ok(result);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models.Admin
 {
@@ -20,5 +21,8 @@ namespace backend.Models.Admin
 
         public string TrangThai { get; set; } // Đúng giờ, Đi muộn, Về sớm
         public string GhiChu { get; set; }
+
+        [ForeignKey("CaLamViecId")]
+        public CaLamViec? CaLamViec { get; set; }
     }
 }
